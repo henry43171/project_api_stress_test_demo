@@ -1,0 +1,1002 @@
+[
+  {
+    "gender": "other",
+    "age_group": "10-20",
+    "feedback": "一般",
+    "willing": {
+      "to_return": false,
+      "receive_promotions": false,
+      "receive_birthday_notifications": true
+    }
+  },
+  {
+    "gender": "male",
+    "age_group": "60-70",
+    "feedback": "非常滿意",
+    "willing": {
+      "to_return": false,
+      "receive_promotions": true,
+      "receive_birthday_notifications": true
+    }
+  },
+  {
+    "gender": "other",
+    "age_group": "50-60",
+    "feedback": "需要改進",
+    "willing": {
+      "to_return": true,
+      "receive_promotions": true,
+      "receive_birthday_notifications": false
+    }
+  },
+  {
+    "gender": "male",
+    "age_group": "60-70",
+    "feedback": "需要改進",
+    "willing": {
+      "to_return": false,
+      "receive_promotions": true,
+      "receive_birthday_notifications": true
+    }
+  },
+  {
+    "gender": "female",
+    "age_group": "70以上",
+    "feedback": "一般",
+    "willing": {
+      "to_return": false,
+      "receive_promotions": true,
+      "receive_birthday_notifications": true
+    }
+  },
+  {
+    "gender": "other",
+    "age_group": "70以上",
+    "feedback": "不錯",
+    "willing": {
+      "to_return": false,
+      "receive_promotions": false,
+      "receive_birthday_notifications": true
+    }
+  },
+  {
+    "gender": "male",
+    "age_group": "20-30",
+    "feedback": "很好",
+    "willing": {
+      "to_return": false,
+      "receive_promotions": true,
+      "receive_birthday_notifications": false
+    }
+  },
+  {
+    "gender": "male",
+    "age_group": "30-40",
+    "feedback": "不錯",
+    "willing": {
+      "to_return": false,
+      "receive_promotions": false,
+      "receive_birthday_notifications": true
+    }
+  },
+  {
+    "gender": "male",
+    "age_group": "10以下",
+    "feedback": "一般",
+    "willing": {
+      "to_return": true,
+      "receive_promotions": false,
+      "receive_birthday_notifications": false
+    }
+  },
+  {
+    "gender": "female",
+    "age_group": "70以上",
+    "feedback": "一般",
+    "willing": {
+      "to_return": true,
+      "receive_promotions": false,
+      "receive_birthday_notifications": false
+    }
+  },
+  {
+    "gender": "male",
+    "age_group": "40-50",
+    "feedback": "一般",
+    "willing": {
+      "to_return": true,
+      "receive_promotions": true,
+      "receive_birthday_notifications": true
+    }
+  },
+  {
+    "gender": "other",
+    "age_group": "40-50",
+    "feedback": "不錯",
+    "willing": {
+      "to_return": false,
+      "receive_promotions": true,
+      "receive_birthday_notifications": false
+    }
+  },
+  {
+    "gender": "male",
+    "age_group": "70以上",
+    "feedback": "不錯",
+    "willing": {
+      "to_return": true,
+      "receive_promotions": false,
+      "receive_birthday_notifications": false
+    }
+  },
+  {
+    "gender": "female",
+    "age_group": "10-20",
+    "feedback": "一般",
+    "willing": {
+      "to_return": false,
+      "receive_promotions": true,
+      "receive_birthday_notifications": false
+    }
+  },
+  {
+    "gender": "female",
+    "age_group": "10-20",
+    "feedback": "一般",
+    "willing": {
+      "to_return": false,
+      "receive_promotions": false,
+      "receive_birthday_notifications": false
+    }
+  },
+  {
+    "gender": "other",
+    "age_group": "30-40",
+    "feedback": "很好",
+    "willing": {
+      "to_return": false,
+      "receive_promotions": true,
+      "receive_birthday_notifications": true
+    }
+  },
+  {
+    "gender": "other",
+    "age_group": "70以上",
+    "feedback": "一般",
+    "willing": {
+      "to_return": true,
+      "receive_promotions": false,
+      "receive_birthday_notifications": false
+    }
+  },
+  {
+    "gender": "male",
+    "age_group": "60-70",
+    "feedback": "非常滿意",
+    "willing": {
+      "to_return": true,
+      "receive_promotions": false,
+      "receive_birthday_notifications": false
+    }
+  },
+  {
+    "gender": "male",
+    "age_group": "10-20",
+    "feedback": "需要改進",
+    "willing": {
+      "to_return": false,
+      "receive_promotions": false,
+      "receive_birthday_notifications": false
+    }
+  },
+  {
+    "gender": "female",
+    "age_group": "30-40",
+    "feedback": "很好",
+    "willing": {
+      "to_return": true,
+      "receive_promotions": true,
+      "receive_birthday_notifications": false
+    }
+  },
+  {
+    "gender": "other",
+    "age_group": "60-70",
+    "feedback": "非常滿意",
+    "willing": {
+      "to_return": true,
+      "receive_promotions": true,
+      "receive_birthday_notifications": true
+    }
+  },
+  {
+    "gender": "male",
+    "age_group": "10-20",
+    "feedback": "一般",
+    "willing": {
+      "to_return": true,
+      "receive_promotions": true,
+      "receive_birthday_notifications": false
+    }
+  },
+  {
+    "gender": "female",
+    "age_group": "10-20",
+    "feedback": "一般",
+    "willing": {
+      "to_return": false,
+      "receive_promotions": false,
+      "receive_birthday_notifications": false
+    }
+  },
+  {
+    "gender": "male",
+    "age_group": "40-50",
+    "feedback": "需要改進",
+    "willing": {
+      "to_return": false,
+      "receive_promotions": true,
+      "receive_birthday_notifications": false
+    }
+  },
+  {
+    "gender": "other",
+    "age_group": "10-20",
+    "feedback": "一般",
+    "willing": {
+      "to_return": false,
+      "receive_promotions": false,
+      "receive_birthday_notifications": false
+    }
+  },
+  {
+    "gender": "male",
+    "age_group": "60-70",
+    "feedback": "需要改進",
+    "willing": {
+      "to_return": true,
+      "receive_promotions": false,
+      "receive_birthday_notifications": false
+    }
+  },
+  {
+    "gender": "other",
+    "age_group": "60-70",
+    "feedback": "需要改進",
+    "willing": {
+      "to_return": true,
+      "receive_promotions": false,
+      "receive_birthday_notifications": false
+    }
+  },
+  {
+    "gender": "male",
+    "age_group": "30-40",
+    "feedback": "一般",
+    "willing": {
+      "to_return": true,
+      "receive_promotions": true,
+      "receive_birthday_notifications": true
+    }
+  },
+  {
+    "gender": "male",
+    "age_group": "40-50",
+    "feedback": "一般",
+    "willing": {
+      "to_return": false,
+      "receive_promotions": true,
+      "receive_birthday_notifications": false
+    }
+  },
+  {
+    "gender": "other",
+    "age_group": "10-20",
+    "feedback": "需要改進",
+    "willing": {
+      "to_return": true,
+      "receive_promotions": false,
+      "receive_birthday_notifications": true
+    }
+  },
+  {
+    "gender": "other",
+    "age_group": "70以上",
+    "feedback": "非常滿意",
+    "willing": {
+      "to_return": true,
+      "receive_promotions": true,
+      "receive_birthday_notifications": false
+    }
+  },
+  {
+    "gender": "other",
+    "age_group": "70以上",
+    "feedback": "非常滿意",
+    "willing": {
+      "to_return": true,
+      "receive_promotions": false,
+      "receive_birthday_notifications": false
+    }
+  },
+  {
+    "gender": "other",
+    "age_group": "20-30",
+    "feedback": "不錯",
+    "willing": {
+      "to_return": true,
+      "receive_promotions": false,
+      "receive_birthday_notifications": true
+    }
+  },
+  {
+    "gender": "male",
+    "age_group": "30-40",
+    "feedback": "非常滿意",
+    "willing": {
+      "to_return": true,
+      "receive_promotions": true,
+      "receive_birthday_notifications": false
+    }
+  },
+  {
+    "gender": "other",
+    "age_group": "70以上",
+    "feedback": "非常滿意",
+    "willing": {
+      "to_return": true,
+      "receive_promotions": false,
+      "receive_birthday_notifications": true
+    }
+  },
+  {
+    "gender": "other",
+    "age_group": "40-50",
+    "feedback": "非常滿意",
+    "willing": {
+      "to_return": false,
+      "receive_promotions": true,
+      "receive_birthday_notifications": true
+    }
+  },
+  {
+    "gender": "male",
+    "age_group": "70以上",
+    "feedback": "需要改進",
+    "willing": {
+      "to_return": true,
+      "receive_promotions": true,
+      "receive_birthday_notifications": false
+    }
+  },
+  {
+    "gender": "male",
+    "age_group": "10以下",
+    "feedback": "需要改進",
+    "willing": {
+      "to_return": false,
+      "receive_promotions": true,
+      "receive_birthday_notifications": true
+    }
+  },
+  {
+    "gender": "other",
+    "age_group": "30-40",
+    "feedback": "很好",
+    "willing": {
+      "to_return": true,
+      "receive_promotions": true,
+      "receive_birthday_notifications": false
+    }
+  },
+  {
+    "gender": "male",
+    "age_group": "70以上",
+    "feedback": "不錯",
+    "willing": {
+      "to_return": false,
+      "receive_promotions": true,
+      "receive_birthday_notifications": false
+    }
+  },
+  {
+    "gender": "female",
+    "age_group": "70以上",
+    "feedback": "需要改進",
+    "willing": {
+      "to_return": true,
+      "receive_promotions": false,
+      "receive_birthday_notifications": true
+    }
+  },
+  {
+    "gender": "female",
+    "age_group": "40-50",
+    "feedback": "很好",
+    "willing": {
+      "to_return": false,
+      "receive_promotions": false,
+      "receive_birthday_notifications": false
+    }
+  },
+  {
+    "gender": "other",
+    "age_group": "60-70",
+    "feedback": "一般",
+    "willing": {
+      "to_return": true,
+      "receive_promotions": false,
+      "receive_birthday_notifications": false
+    }
+  },
+  {
+    "gender": "female",
+    "age_group": "40-50",
+    "feedback": "需要改進",
+    "willing": {
+      "to_return": false,
+      "receive_promotions": false,
+      "receive_birthday_notifications": false
+    }
+  },
+  {
+    "gender": "male",
+    "age_group": "50-60",
+    "feedback": "很好",
+    "willing": {
+      "to_return": true,
+      "receive_promotions": true,
+      "receive_birthday_notifications": false
+    }
+  },
+  {
+    "gender": "female",
+    "age_group": "60-70",
+    "feedback": "非常滿意",
+    "willing": {
+      "to_return": true,
+      "receive_promotions": false,
+      "receive_birthday_notifications": true
+    }
+  },
+  {
+    "gender": "female",
+    "age_group": "40-50",
+    "feedback": "不錯",
+    "willing": {
+      "to_return": false,
+      "receive_promotions": true,
+      "receive_birthday_notifications": true
+    }
+  },
+  {
+    "gender": "male",
+    "age_group": "20-30",
+    "feedback": "不錯",
+    "willing": {
+      "to_return": false,
+      "receive_promotions": false,
+      "receive_birthday_notifications": false
+    }
+  },
+  {
+    "gender": "male",
+    "age_group": "50-60",
+    "feedback": "不錯",
+    "willing": {
+      "to_return": false,
+      "receive_promotions": true,
+      "receive_birthday_notifications": true
+    }
+  },
+  {
+    "gender": "other",
+    "age_group": "60-70",
+    "feedback": "一般",
+    "willing": {
+      "to_return": false,
+      "receive_promotions": false,
+      "receive_birthday_notifications": false
+    }
+  },
+  {
+    "gender": "female",
+    "age_group": "50-60",
+    "feedback": "很好",
+    "willing": {
+      "to_return": true,
+      "receive_promotions": false,
+      "receive_birthday_notifications": true
+    }
+  },
+  {
+    "gender": "male",
+    "age_group": "50-60",
+    "feedback": "需要改進",
+    "willing": {
+      "to_return": false,
+      "receive_promotions": false,
+      "receive_birthday_notifications": false
+    }
+  },
+  {
+    "gender": "female",
+    "age_group": "10-20",
+    "feedback": "非常滿意",
+    "willing": {
+      "to_return": true,
+      "receive_promotions": false,
+      "receive_birthday_notifications": false
+    }
+  },
+  {
+    "gender": "male",
+    "age_group": "60-70",
+    "feedback": "非常滿意",
+    "willing": {
+      "to_return": true,
+      "receive_promotions": true,
+      "receive_birthday_notifications": true
+    }
+  },
+  {
+    "gender": "male",
+    "age_group": "60-70",
+    "feedback": "不錯",
+    "willing": {
+      "to_return": false,
+      "receive_promotions": false,
+      "receive_birthday_notifications": true
+    }
+  },
+  {
+    "gender": "other",
+    "age_group": "40-50",
+    "feedback": "一般",
+    "willing": {
+      "to_return": false,
+      "receive_promotions": false,
+      "receive_birthday_notifications": true
+    }
+  },
+  {
+    "gender": "male",
+    "age_group": "50-60",
+    "feedback": "不錯",
+    "willing": {
+      "to_return": false,
+      "receive_promotions": false,
+      "receive_birthday_notifications": true
+    }
+  },
+  {
+    "gender": "other",
+    "age_group": "10以下",
+    "feedback": "一般",
+    "willing": {
+      "to_return": false,
+      "receive_promotions": true,
+      "receive_birthday_notifications": false
+    }
+  },
+  {
+    "gender": "other",
+    "age_group": "10-20",
+    "feedback": "非常滿意",
+    "willing": {
+      "to_return": false,
+      "receive_promotions": true,
+      "receive_birthday_notifications": true
+    }
+  },
+  {
+    "gender": "female",
+    "age_group": "20-30",
+    "feedback": "需要改進",
+    "willing": {
+      "to_return": true,
+      "receive_promotions": false,
+      "receive_birthday_notifications": false
+    }
+  },
+  {
+    "gender": "male",
+    "age_group": "60-70",
+    "feedback": "不錯",
+    "willing": {
+      "to_return": false,
+      "receive_promotions": false,
+      "receive_birthday_notifications": true
+    }
+  },
+  {
+    "gender": "male",
+    "age_group": "10以下",
+    "feedback": "一般",
+    "willing": {
+      "to_return": false,
+      "receive_promotions": true,
+      "receive_birthday_notifications": false
+    }
+  },
+  {
+    "gender": "male",
+    "age_group": "20-30",
+    "feedback": "很好",
+    "willing": {
+      "to_return": true,
+      "receive_promotions": false,
+      "receive_birthday_notifications": true
+    }
+  },
+  {
+    "gender": "other",
+    "age_group": "60-70",
+    "feedback": "不錯",
+    "willing": {
+      "to_return": false,
+      "receive_promotions": true,
+      "receive_birthday_notifications": false
+    }
+  },
+  {
+    "gender": "female",
+    "age_group": "50-60",
+    "feedback": "不錯",
+    "willing": {
+      "to_return": false,
+      "receive_promotions": true,
+      "receive_birthday_notifications": true
+    }
+  },
+  {
+    "gender": "male",
+    "age_group": "10以下",
+    "feedback": "不錯",
+    "willing": {
+      "to_return": true,
+      "receive_promotions": false,
+      "receive_birthday_notifications": false
+    }
+  },
+  {
+    "gender": "male",
+    "age_group": "20-30",
+    "feedback": "一般",
+    "willing": {
+      "to_return": true,
+      "receive_promotions": false,
+      "receive_birthday_notifications": true
+    }
+  },
+  {
+    "gender": "male",
+    "age_group": "50-60",
+    "feedback": "需要改進",
+    "willing": {
+      "to_return": false,
+      "receive_promotions": false,
+      "receive_birthday_notifications": true
+    }
+  },
+  {
+    "gender": "female",
+    "age_group": "70以上",
+    "feedback": "需要改進",
+    "willing": {
+      "to_return": false,
+      "receive_promotions": false,
+      "receive_birthday_notifications": true
+    }
+  },
+  {
+    "gender": "other",
+    "age_group": "10以下",
+    "feedback": "不錯",
+    "willing": {
+      "to_return": false,
+      "receive_promotions": false,
+      "receive_birthday_notifications": true
+    }
+  },
+  {
+    "gender": "male",
+    "age_group": "50-60",
+    "feedback": "需要改進",
+    "willing": {
+      "to_return": true,
+      "receive_promotions": false,
+      "receive_birthday_notifications": true
+    }
+  },
+  {
+    "gender": "male",
+    "age_group": "50-60",
+    "feedback": "一般",
+    "willing": {
+      "to_return": false,
+      "receive_promotions": true,
+      "receive_birthday_notifications": false
+    }
+  },
+  {
+    "gender": "other",
+    "age_group": "10以下",
+    "feedback": "不錯",
+    "willing": {
+      "to_return": false,
+      "receive_promotions": true,
+      "receive_birthday_notifications": false
+    }
+  },
+  {
+    "gender": "female",
+    "age_group": "10-20",
+    "feedback": "需要改進",
+    "willing": {
+      "to_return": true,
+      "receive_promotions": false,
+      "receive_birthday_notifications": false
+    }
+  },
+  {
+    "gender": "male",
+    "age_group": "10-20",
+    "feedback": "很好",
+    "willing": {
+      "to_return": true,
+      "receive_promotions": true,
+      "receive_birthday_notifications": true
+    }
+  },
+  {
+    "gender": "male",
+    "age_group": "30-40",
+    "feedback": "不錯",
+    "willing": {
+      "to_return": true,
+      "receive_promotions": false,
+      "receive_birthday_notifications": true
+    }
+  },
+  {
+    "gender": "other",
+    "age_group": "10-20",
+    "feedback": "不錯",
+    "willing": {
+      "to_return": false,
+      "receive_promotions": true,
+      "receive_birthday_notifications": true
+    }
+  },
+  {
+    "gender": "female",
+    "age_group": "60-70",
+    "feedback": "很好",
+    "willing": {
+      "to_return": true,
+      "receive_promotions": true,
+      "receive_birthday_notifications": true
+    }
+  },
+  {
+    "gender": "other",
+    "age_group": "10-20",
+    "feedback": "非常滿意",
+    "willing": {
+      "to_return": true,
+      "receive_promotions": false,
+      "receive_birthday_notifications": false
+    }
+  },
+  {
+    "gender": "other",
+    "age_group": "20-30",
+    "feedback": "需要改進",
+    "willing": {
+      "to_return": false,
+      "receive_promotions": true,
+      "receive_birthday_notifications": true
+    }
+  },
+  {
+    "gender": "other",
+    "age_group": "10以下",
+    "feedback": "需要改進",
+    "willing": {
+      "to_return": true,
+      "receive_promotions": false,
+      "receive_birthday_notifications": false
+    }
+  },
+  {
+    "gender": "male",
+    "age_group": "20-30",
+    "feedback": "很好",
+    "willing": {
+      "to_return": true,
+      "receive_promotions": false,
+      "receive_birthday_notifications": false
+    }
+  },
+  {
+    "gender": "female",
+    "age_group": "20-30",
+    "feedback": "一般",
+    "willing": {
+      "to_return": true,
+      "receive_promotions": false,
+      "receive_birthday_notifications": true
+    }
+  },
+  {
+    "gender": "female",
+    "age_group": "40-50",
+    "feedback": "需要改進",
+    "willing": {
+      "to_return": false,
+      "receive_promotions": true,
+      "receive_birthday_notifications": false
+    }
+  },
+  {
+    "gender": "male",
+    "age_group": "40-50",
+    "feedback": "非常滿意",
+    "willing": {
+      "to_return": false,
+      "receive_promotions": false,
+      "receive_birthday_notifications": true
+    }
+  },
+  {
+    "gender": "other",
+    "age_group": "60-70",
+    "feedback": "一般",
+    "willing": {
+      "to_return": false,
+      "receive_promotions": false,
+      "receive_birthday_notifications": false
+    }
+  },
+  {
+    "gender": "female",
+    "age_group": "10以下",
+    "feedback": "需要改進",
+    "willing": {
+      "to_return": true,
+      "receive_promotions": false,
+      "receive_birthday_notifications": false
+    }
+  },
+  {
+    "gender": "female",
+    "age_group": "60-70",
+    "feedback": "不錯",
+    "willing": {
+      "to_return": true,
+      "receive_promotions": true,
+      "receive_birthday_notifications": false
+    }
+  },
+  {
+    "gender": "female",
+    "age_group": "10以下",
+    "feedback": "非常滿意",
+    "willing": {
+      "to_return": true,
+      "receive_promotions": true,
+      "receive_birthday_notifications": false
+    }
+  },
+  {
+    "gender": "male",
+    "age_group": "10以下",
+    "feedback": "很好",
+    "willing": {
+      "to_return": true,
+      "receive_promotions": false,
+      "receive_birthday_notifications": false
+    }
+  },
+  {
+    "gender": "female",
+    "age_group": "10以下",
+    "feedback": "很好",
+    "willing": {
+      "to_return": false,
+      "receive_promotions": true,
+      "receive_birthday_notifications": true
+    }
+  },
+  {
+    "gender": "other",
+    "age_group": "70以上",
+    "feedback": "非常滿意",
+    "willing": {
+      "to_return": true,
+      "receive_promotions": true,
+      "receive_birthday_notifications": false
+    }
+  },
+  {
+    "gender": "other",
+    "age_group": "10-20",
+    "feedback": "非常滿意",
+    "willing": {
+      "to_return": true,
+      "receive_promotions": true,
+      "receive_birthday_notifications": true
+    }
+  },
+  {
+    "gender": "other",
+    "age_group": "30-40",
+    "feedback": "不錯",
+    "willing": {
+      "to_return": true,
+      "receive_promotions": false,
+      "receive_birthday_notifications": false
+    }
+  },
+  {
+    "gender": "other",
+    "age_group": "50-60",
+    "feedback": "很好",
+    "willing": {
+      "to_return": true,
+      "receive_promotions": true,
+      "receive_birthday_notifications": true
+    }
+  },
+  {
+    "gender": "other",
+    "age_group": "10以下",
+    "feedback": "需要改進",
+    "willing": {
+      "to_return": true,
+      "receive_promotions": false,
+      "receive_birthday_notifications": true
+    }
+  },
+  {
+    "gender": "male",
+    "age_group": "30-40",
+    "feedback": "很好",
+    "willing": {
+      "to_return": true,
+      "receive_promotions": false,
+      "receive_birthday_notifications": true
+    }
+  },
+  {
+    "gender": "male",
+    "age_group": "30-40",
+    "feedback": "需要改進",
+    "willing": {
+      "to_return": false,
+      "receive_promotions": false,
+      "receive_birthday_notifications": false
+    }
+  },
+  {
+    "gender": "male",
+    "age_group": "60-70",
+    "feedback": "非常滿意",
+    "willing": {
+      "to_return": true,
+      "receive_promotions": true,
+      "receive_birthday_notifications": true
+    }
+  },
+  {
+    "gender": "female",
+    "age_group": "10-20",
+    "feedback": "需要改進",
+    "willing": {
+      "to_return": false,
+      "receive_promotions": true,
+      "receive_birthday_notifications": false
+    }
+  }
+]
