@@ -23,3 +23,6 @@ Thumbs.db
 
 # Fake data
 fake_data/fake_form_data.json
+
+# config
+config

@@ -1,0 +1,13 @@
+{
+  "BASE_URL": "http://127.0.0.1:5000",
+  "NUM_USERS": 50,
+  "BATCH_SIZE": 20,
+  "BATCH_DELAY": 1,
+  "MAX_RETRIES": 2,
+  "MAX_WORKERS": 200,
+  "USER_ACTIONS": [
+    {"action": "visit_home", "weight": 0.4},
+    {"action": "fill_form", "weight": 0.5},
+    {"action": "refresh_page", "weight": 0.1}
+  ]
+}

@@ -7,20 +7,19 @@ import random
 import os
 from datetime import datetime
 
-BASE_URL = "http://127.0.0.1:5000"
-NUM_USERS = 50
-BATCH_SIZE = 20
-BATCH_DELAY = 1
-MAX_RETRIES = 2
+# --- 讀取 config ---
+with open("config/core.json", "r", encoding="utf-8") as f:
+    config = json.load(f)
 
-# 行為權重設定
-USER_ACTIONS = [
-    ("visit_home", 0.1),
-    ("fill_form", 0.8),
-    ("refresh_page", 0.1)
-]
+BASE_URL = config.get("BASE_URL", "http://127.0.0.1:5000")
+NUM_USERS = config.get("NUM_USERS", 50)
+BATCH_SIZE = config.get("BATCH_SIZE", 20)
+BATCH_DELAY = config.get("BATCH_DELAY", 1)
+MAX_RETRIES = config.get("MAX_RETRIES", 2)
+MAX_WORKERS = config.get("MAX_WORKERS", 200)
+USER_ACTIONS = [(a["action"], a["weight"]) for a in config.get("USER_ACTIONS", [])]
 
-# 建立目錄 & 檔名
+# --- 建立目錄 & 檔名 ---
 timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
 log_dir = os.path.join("logs", "core")
 summary_dir = os.path.join("summary", "core")
@@ -30,7 +29,7 @@ os.makedirs(summary_dir, exist_ok=True)
 log_file = os.path.join(log_dir, f"core_{timestamp}.log")
 summary_file = os.path.join(summary_dir, f"core_{timestamp}_summary.json")
 
-# Logging 設定
+# --- Logging 設定 ---
 logging.basicConfig(
     filename=log_file,
     filemode="w",
@@ -39,10 +38,11 @@ logging.basicConfig(
     encoding="utf-8"
 )
 
-# 讀取假資料
+# --- 讀取假資料 ---
 with open("./fake_data/fake_form_data.json", "r", encoding="utf-8") as f:
     fake_forms = json.load(f)
 
+# --- 輔助函數 ---
 def make_request(method, url, **kwargs):
     """帶重試的請求"""
     for attempt in range(MAX_RETRIES + 1):
@@ -140,6 +140,7 @@ def simulate_user(user_id, form_data):
         "result": result
     }
 
+# --- 主程式 (保留原有測試功能) ---
 def main():
     results = []
     start_total = time.time()
@@ -147,7 +148,7 @@ def main():
 
     for i in range(0, NUM_USERS, BATCH_SIZE):
         batch_forms = forms_to_use[i:i+BATCH_SIZE]
-        max_workers = min(len(batch_forms), 200)
+        max_workers = min(len(batch_forms), MAX_WORKERS)
         with ThreadPoolExecutor(max_workers=max_workers) as executor:
             futures = [executor.submit(simulate_user, i+j+1, batch_forms[j]) for j in range(len(batch_forms))]
             for future in as_completed(futures):
