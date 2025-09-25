@@ -15,6 +15,7 @@ env/
 
 # Logs
 *.log
+summary
 
 # OS files
 .DS_Store

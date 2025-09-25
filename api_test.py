@@ -4,6 +4,8 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 import json
 import logging
 import random
+import os
+from datetime import datetime
 
 BASE_URL = "http://127.0.0.1:5000"
 NUM_USERS = 50
@@ -13,14 +15,24 @@ MAX_RETRIES = 2
 
 # 行為權重設定
 USER_ACTIONS = [
-    ("visit_home", 0.5),
-    ("fill_form", 0.4),
+    ("visit_home", 0.1),
+    ("fill_form", 0.8),
     ("refresh_page", 0.1)
 ]
 
+# 建立目錄 & 檔名
+timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+log_dir = os.path.join("logs", "core")
+summary_dir = os.path.join("summary", "core")
+os.makedirs(log_dir, exist_ok=True)
+os.makedirs(summary_dir, exist_ok=True)
+
+log_file = os.path.join(log_dir, f"core_{timestamp}.log")
+summary_file = os.path.join(summary_dir, f"core_{timestamp}_summary.json")
+
 # Logging 設定
 logging.basicConfig(
-    filename="test_core_upgrade.log",
+    filename=log_file,
     filemode="w",
     level=logging.INFO,
     format="%(asctime)s - %(levelname)s - %(message)s",
@@ -155,24 +167,28 @@ def main():
     avg_time = sum(r["elapsed"] for r in results) / len(results)
     max_time = max(r["elapsed"] for r in results)
 
-    print("\n--- Test Summary ---")
-    print(f"Total users: {NUM_USERS}")
-    print(f"PASS: {total_success}, FAIL: {total_fail}")
-    print(f"Average response time: {avg_time:.2f}s")
-    print(f"Max response time: {max_time:.2f}s")
-    print(f"Total test duration: {end_total - start_total:.2f}s")
-    print("\nStage average times (s):")
-    for stage, times in stage_times.items():
-        if times:
-            print(f"{stage}: {sum(times)/len(times):.2f}s")
+    summary = {
+        "timestamp": timestamp,
+        "total_users": NUM_USERS,
+        "pass": total_success,
+        "fail": total_fail,
+        "avg_response_time": avg_time,
+        "max_response_time": max_time,
+        "total_test_duration": end_total - start_total,
+        "stage_avg_times": {
+            stage: (sum(times) / len(times) if times else None)
+            for stage, times in stage_times.items()
+        }
+    }
 
-    # Console 顯示部分結果
-    for r in results[:5]:
-        print(
-            f"User {r['user_id']} - Actions: {r['actions']}, "
-            f"Result: {r['success']}, "
-            f"Time: {r['elapsed']:.2f}s, Status: {r['status_codes']}"
-        )
+    # 輸出 JSON summary
+    with open(summary_file, "w", encoding="utf-8") as f:
+        json.dump(summary, f, indent=2, ensure_ascii=False)
+
+    print("\n--- Test Summary ---")
+    print(json.dumps(summary, indent=2, ensure_ascii=False))
+    print(f"\nSummary saved to: {summary_file}")
+    print(f"Log saved to: {log_file}")
 
 if __name__ == "__main__":
     main()
