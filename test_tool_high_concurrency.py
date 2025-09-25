@@ -2,14 +2,17 @@ import os
 import time
 import json
 from concurrent.futures import ThreadPoolExecutor, as_completed
-from api_test_core import simulate_user, fake_forms, NUM_USERS, BATCH_SIZE, BATCH_DELAY  # 核心已經寫好的部分
+from api_test_core import simulate_user, fake_forms, BATCH_SIZE, BATCH_DELAY
 from datetime import datetime
 import csv
 
-# 高併發測試參數
-CONCURRENT_USERS_LIST = [100, 150, 200]  # 可以自行擴展
-MAX_WORKERS = 10  # 單批次平行工作者數
-BATCH_PAUSE = 10  # 不同批次間的休息時間（秒）
+# 讀取高併發測試參數
+with open("config/high_concurrency.json", "r", encoding="utf-8") as f:
+    config = json.load(f)
+
+CONCURRENT_USERS_LIST = config["CONCURRENT_USERS_LIST"]
+MAX_WORKERS = config["MAX_WORKERS"]
+BATCH_PAUSE = config["BATCH_PAUSE"]
 
 # 檔案/資料夾結構
 LOG_DIR = "logs/high_concurrency"
