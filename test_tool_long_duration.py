@@ -1,19 +1,23 @@
 import os
 import time
 import json
-from concurrent.futures import ThreadPoolExecutor, as_completed
-from api_test_core import simulate_user, fake_forms, BATCH_SIZE, BATCH_DELAY
-from datetime import datetime, timedelta
-import csv
 import math
+import csv
+from datetime import datetime, timedelta
+from concurrent.futures import ThreadPoolExecutor, as_completed
 
-# 長時間測試參數 (以分鐘為單位，快速展示用)
-DURATION_MINUTES = 1        # 總測試持續時間
-UNIT_INTERVAL_SEC = 20      # 單位時間長度，秒
-USERS_PER_INTERVAL = 50     # 每個單位時間內模擬使用者數量
-MAX_WORKERS = 10            # 單批次平行工作者數
+from api_test_core import simulate_user, fake_forms, BATCH_SIZE, BATCH_DELAY
 
-# 檔案/資料夾結構
+# 載入設定檔
+with open("config/long_duration.json", "r", encoding="utf-8") as f:
+    cfg = json.load(f)
+
+DURATION_MINUTES = cfg["DURATION_MINUTES"]
+UNIT_INTERVAL_SEC = cfg["UNIT_INTERVAL_SEC"]
+USERS_PER_INTERVAL = cfg["USERS_PER_INTERVAL"]
+MAX_WORKERS = cfg["MAX_WORKERS"]
+
+# 檔案/資料夾結構 (維持硬編碼)
 LOG_DIR = "logs/long_duration"
 SUMMARY_DIR = "summary/long_duration"
 os.makedirs(LOG_DIR, exist_ok=True)
