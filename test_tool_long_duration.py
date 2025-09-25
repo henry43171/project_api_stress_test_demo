@@ -2,7 +2,7 @@ import os
 import time
 import json
 from concurrent.futures import ThreadPoolExecutor, as_completed
-from api_test_core import simulate_user, fake_forms, BATCH_SIZE, BATCH_DELAY  # 核心已經寫好的部分
+from api_test_core import simulate_user, fake_forms, BATCH_SIZE, BATCH_DELAY
 from datetime import datetime, timedelta
 import csv
 import math
@@ -20,7 +20,6 @@ os.makedirs(LOG_DIR, exist_ok=True)
 os.makedirs(SUMMARY_DIR, exist_ok=True)
 
 def run_long_duration_test():
-    start_total = datetime.now()
     total_intervals = math.ceil(DURATION_MINUTES * 60 / UNIT_INTERVAL_SEC)
     interval_count = 0
     all_results = []
@@ -58,8 +57,14 @@ def run_long_duration_test():
         # 檔名時間
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
         log_file = os.path.join(LOG_DIR, f"ld_{timestamp}.log")
-        summary_file_json = os.path.join(SUMMARY_DIR, f"summary_duration_{timestamp}.json")
-        summary_file_csv = os.path.join(SUMMARY_DIR, f"summary_duration_{timestamp}.csv")
+        summary_file_json = os.path.join(
+            SUMMARY_DIR, 
+            f"summary_duration_{USERS_PER_INTERVAL}users_{DURATION_MINUTES}m_{timestamp}.json"
+        )
+        summary_file_csv = os.path.join(
+            SUMMARY_DIR, 
+            f"summary_duration_{USERS_PER_INTERVAL}users_{DURATION_MINUTES}m_{timestamp}.csv"
+        )
 
         # 寫 log
         with open(log_file, "w", encoding="utf-8") as f:
