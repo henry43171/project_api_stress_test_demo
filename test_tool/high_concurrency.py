@@ -2,7 +2,7 @@ import os
 import time
 import json
 from concurrent.futures import ThreadPoolExecutor, as_completed
-from api_test_core import simulate_user, fake_forms, BATCH_SIZE, BATCH_DELAY
+from core.api_test_core import simulate_user, fake_forms, BATCH_SIZE, BATCH_DELAY
 from datetime import datetime
 import csv
 

@@ -6,7 +6,7 @@ import csv
 from datetime import datetime, timedelta
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
-from api_test_core import simulate_user, fake_forms, BATCH_SIZE, BATCH_DELAY
+from core.api_test_core import simulate_user, fake_forms, BATCH_SIZE, BATCH_DELAY
 
 # 載入設定檔
 with open("config/long_duration.json", "r", encoding="utf-8") as f:
