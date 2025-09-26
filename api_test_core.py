@@ -6,6 +6,7 @@ import logging
 import random
 import os
 from datetime import datetime
+import math
 
 # --- 讀取 config ---
 with open("config/core.json", "r", encoding="utf-8") as f:
@@ -55,7 +56,26 @@ def make_request(method, url, **kwargs):
             else:
                 return {"error": str(e)}
 
-def simulate_user(user_id, form_data):
+# --- 斷差 fail probability ---
+def calculate_fail_probability(num_users, threshold=3000, max_fail=0.9, steepness=0.002):
+    """
+    使用 Sigmoid + 隨機波動模擬真實 fail probability
+    - 低於 threshold 時，失敗率接近 base (0.01)
+    - 超過 threshold 時逐漸增加至 max_fail
+    - steepness 控制曲線陡度
+    """
+    base = 0.01
+    x = num_users - threshold
+    prob = base + (max_fail - base) / (1 + math.exp(-steepness * x))
+    # 加入 ±10% 隨機波動
+    noise = random.uniform(-0.1, 0.1) * prob
+    prob = prob + noise
+    return max(0.0, min(prob, max_fail))
+
+def simulate_user(user_id, form_data, current_num_users=NUM_USERS):
+    """
+    模擬使用者行為，並依據目前使用者數量計算失敗率。
+    """
     start_total = time.time()
     actions_taken = []
     status_codes = []
@@ -63,7 +83,27 @@ def simulate_user(user_id, form_data):
     result = None
     success = True
 
-    # 選擇行為
+    # --- 計算 fail probability ---
+    fail_probability = calculate_fail_probability(current_num_users, threshold=3000)
+
+    # 隨機決定是否失敗
+    if random.random() < fail_probability:
+        elapsed_total = random.uniform(0.1, 2.0)
+        logging.info(
+            "User %d - Action: %s, Result: FAIL (simulated due to load), Time: %.2fs",
+            user_id, [], elapsed_total
+        )
+        return {
+            "user_id": user_id,
+            "actions": [],
+            "success": "FAIL",
+            "status_codes": [],
+            "elapsed": elapsed_total,
+            "filled_form": filled_form,
+            "result": {"error": "Simulated failure due to load"}
+        }
+
+    # --- 保留原本 API 行為模擬 ---
     action = random.choices(
         [a[0] for a in USER_ACTIONS],
         weights=[a[1] for a in USER_ACTIONS]
@@ -71,7 +111,6 @@ def simulate_user(user_id, form_data):
 
     try:
         if action in ("visit_home", "fill_form"):
-            # 進入首頁
             time.sleep(random.uniform(0.1, 0.5))
             r1 = make_request("GET", f"{BASE_URL}/landing_page")
             status_codes.append(r1.status_code if hasattr(r1, "status_code") else None)
@@ -80,7 +119,6 @@ def simulate_user(user_id, form_data):
                 success = False
 
         if action == "fill_form":
-            # 開始表單
             time.sleep(random.uniform(0.1, 0.3))
             r2 = make_request("POST", f"{BASE_URL}/start_form")
             status_codes.append(r2.status_code if hasattr(r2, "status_code") else None)
@@ -88,7 +126,6 @@ def simulate_user(user_id, form_data):
             if getattr(r2, "status_code", 0) != 200:
                 success = False
 
-            # 填寫表單
             time.sleep(random.uniform(0.2, 0.7))
             filled_form = {
                 "gender": form_data["gender"],
@@ -107,7 +144,6 @@ def simulate_user(user_id, form_data):
                 result = {"error": f"Status code {getattr(r3, 'status_code', 'N/A')}"}
 
         elif action == "refresh_page":
-            # 只刷新首頁
             time.sleep(random.uniform(0.1, 0.3))
             r = make_request("GET", f"{BASE_URL}/landing_page")
             status_codes.append(r.status_code if hasattr(r, "status_code") else None)
@@ -140,7 +176,7 @@ def simulate_user(user_id, form_data):
         "result": result
     }
 
-# --- 主程式 (保留原有測試功能) ---
+# --- 主程式 ---
 def main():
     results = []
     start_total = time.time()
@@ -150,7 +186,7 @@ def main():
         batch_forms = forms_to_use[i:i+BATCH_SIZE]
         max_workers = min(len(batch_forms), MAX_WORKERS)
         with ThreadPoolExecutor(max_workers=max_workers) as executor:
-            futures = [executor.submit(simulate_user, i+j+1, batch_forms[j]) for j in range(len(batch_forms))]
+            futures = [executor.submit(simulate_user, i+j+1, batch_forms[j], current_num_users=NUM_USERS) for j in range(len(batch_forms))]
             for future in as_completed(futures):
                 results.append(future.result())
         time.sleep(BATCH_DELAY)
