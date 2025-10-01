@@ -20,25 +20,6 @@ MAX_RETRIES = config.get("MAX_RETRIES", 2)
 MAX_WORKERS = config.get("MAX_WORKERS", 200)
 USER_ACTIONS = [(a["action"], a["weight"]) for a in config.get("USER_ACTIONS", [])]
 
-# --- 建立目錄 & 檔名 ---
-timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-log_dir = os.path.join("results/logs", "core")
-summary_dir = os.path.join("results/summary", "core")
-os.makedirs(log_dir, exist_ok=True)
-os.makedirs(summary_dir, exist_ok=True)
-
-log_file = os.path.join(log_dir, f"core_{timestamp}.log")
-summary_file = os.path.join(summary_dir, f"core_{timestamp}_summary.json")
-
-# --- Logging 設定 ---
-logging.basicConfig(
-    filename=log_file,
-    filemode="w",
-    level=logging.INFO,
-    format="%(asctime)s - %(levelname)s - %(message)s",
-    encoding="utf-8"
-)
-
 # --- 讀取假資料 ---
 with open("./fake_data/fake_form_data.json", "r", encoding="utf-8") as f:
     fake_forms = json.load(f)
@@ -58,24 +39,14 @@ def make_request(method, url, **kwargs):
 
 # --- 斷差 fail probability ---
 def calculate_fail_probability(num_users, threshold=3000, max_fail=0.9, steepness=0.002):
-    """
-    使用 Sigmoid + 隨機波動模擬真實 fail probability
-    - 低於 threshold 時，失敗率接近 base (0.01)
-    - 超過 threshold 時逐漸增加至 max_fail
-    - steepness 控制曲線陡度
-    """
     base = 0.01
     x = num_users - threshold
     prob = base + (max_fail - base) / (1 + math.exp(-steepness * x))
-    # 加入 ±10% 隨機波動
     noise = random.uniform(-0.1, 0.1) * prob
     prob = prob + noise
     return max(0.0, min(prob, max_fail))
 
 def simulate_user(user_id, form_data, current_num_users=NUM_USERS):
-    """
-    模擬使用者行為，並依據目前使用者數量計算失敗率。
-    """
     start_total = time.time()
     actions_taken = []
     status_codes = []
@@ -83,10 +54,8 @@ def simulate_user(user_id, form_data, current_num_users=NUM_USERS):
     result = None
     success = True
 
-    # --- 計算 fail probability ---
     fail_probability = calculate_fail_probability(current_num_users, threshold=3000)
 
-    # 隨機決定是否失敗
     if random.random() < fail_probability:
         elapsed_total = random.uniform(0.1, 2.0)
         logging.info(
@@ -103,7 +72,6 @@ def simulate_user(user_id, form_data, current_num_users=NUM_USERS):
             "result": {"error": "Simulated failure due to load"}
         }
 
-    # --- 保留原本 API 行為模擬 ---
     action = random.choices(
         [a[0] for a in USER_ACTIONS],
         weights=[a[1] for a in USER_ACTIONS]
@@ -157,7 +125,6 @@ def simulate_user(user_id, form_data, current_num_users=NUM_USERS):
 
     elapsed_total = time.time() - start_total
 
-    # log
     logging.info(
         "User %d - Action: %s, Result: %s, Time: %.2fs, Status: %s, Payload: %s, Response: %s",
         user_id, actions_taken, "PASS" if success else "FAIL",
@@ -178,6 +145,23 @@ def simulate_user(user_id, form_data, current_num_users=NUM_USERS):
 
 # --- 主程式 ---
 def main():
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    log_dir = os.path.join("results/logs", "core")
+    summary_dir = os.path.join("results/summary", "core")
+    os.makedirs(log_dir, exist_ok=True)
+    os.makedirs(summary_dir, exist_ok=True)
+
+    log_file = os.path.join(log_dir, f"core_{timestamp}.log")
+    summary_file = os.path.join(summary_dir, f"core_{timestamp}_summary.json")
+
+    logging.basicConfig(
+        filename=log_file,
+        filemode="w",
+        level=logging.INFO,
+        format="%(asctime)s - %(levelname)s - %(message)s",
+        encoding="utf-8"
+    )
+
     results = []
     start_total = time.time()
     forms_to_use = fake_forms[:NUM_USERS]
@@ -193,7 +177,6 @@ def main():
 
     end_total = time.time()
 
-    # 分階段統計
     stage_times = {"visit_home": [], "start_form": [], "submit_form": [], "refresh_page": []}
     for r in results:
         for act in r["actions"]:
@@ -218,7 +201,6 @@ def main():
         }
     }
 
-    # 輸出 JSON summary
     with open(summary_file, "w", encoding="utf-8") as f:
         json.dump(summary, f, indent=2, ensure_ascii=False)
 
@@ -226,6 +208,7 @@ def main():
     print(json.dumps(summary, indent=2, ensure_ascii=False))
     print(f"\nSummary saved to: {summary_file}")
     print(f"Log saved to: {log_file}")
+
 
 if __name__ == "__main__":
     main()
