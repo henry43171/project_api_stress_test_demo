@@ -38,23 +38,39 @@ def make_request(method, url, **kwargs):
                 return {"error": str(e)}
 
 # pass probability
-def calculate_pass_probability(num_users, threshold=300, drop_per_user=0.1, noise_frac=0.05):
+def calculate_pass_probability(
+    num_users, 
+    threshold_start=300, 
+    threshold_end=500, 
+    noise_frac=0.05
+):
     """
-    極簡分段：
-    - num_users <= threshold: pass_rate = 1.0
-    - num_users > threshold: pass_rate = max(0.0, 1 - (num_users - threshold) * drop_per_user)
-      並加上 +/- noise_frac 隨機波動（相對於計算出的 pass_rate）
+    分段式通過率計算：
+    - num_users <= threshold_start: pass_rate ≈ 1.0 (高穩定)，含少量 noise
+    - threshold_start < num_users < threshold_end: pass_rate 指數下降
+    - num_users >= threshold_end: pass_rate ≈ 0.0 (幾乎全失敗)，含少量 noise
     """
-    if num_users <= threshold:
-        prob = 1.0
+
+    if num_users <= threshold_start:
+        # 穩定通過
+        pass_rate = 1.0
+    elif num_users >= threshold_end:
+        # 幾乎全數失敗
+        pass_rate = 0.0
     else:
-        prob = max(0.0, 1.0 - (num_users - threshold) * drop_per_user)
+        # 中間區間：指數下降
+        # 設計一個在 threshold_start = 1.0, threshold_end ≈ 0.0 的指數函數
+        x = num_users - threshold_start
+        scale = threshold_end - threshold_start
+        # 用指數衰減：起點 1.0 -> 結束趨近 0
+        decay_rate = 3.0 / scale  # 控制下降速度（可微調）
+        pass_rate = math.exp(-decay_rate * x)
 
-    # 加上少量相對噪聲
-    noise = random.uniform(-noise_frac, noise_frac) * prob
-    prob = prob + noise
-    return max(0.0, min(prob, 1.0))
+    # 加入少量相對 noise
+    noise = random.uniform(-noise_frac, noise_frac) * (pass_rate if pass_rate > 0 else 1)
+    pass_rate = pass_rate + noise
 
+    return max(0.0, min(pass_rate, 1.0))
 
 
 def simulate_user(user_id, form_data, current_num_users=NUM_USERS, execute_api=True):
@@ -69,7 +85,7 @@ def simulate_user(user_id, form_data, current_num_users=NUM_USERS, execute_api=T
     result = None
     success = True
 
-    pass_probability = calculate_pass_probability(current_num_users, threshold=300)
+    pass_probability = calculate_pass_probability(current_num_users, threshold_start=30, threshold_end=50)
 
     if random.random() > pass_probability:
         elapsed_total = random.uniform(0.1, 2.0)
