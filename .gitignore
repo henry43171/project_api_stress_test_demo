@@ -15,7 +15,7 @@ env/
 
 # Logs
 *.log
-summary
+results
 
 # OS files
 .DS_Store

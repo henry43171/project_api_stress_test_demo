@@ -15,8 +15,8 @@ MAX_WORKERS = config["MAX_WORKERS"]
 BATCH_PAUSE = config["BATCH_PAUSE"]
 
 # 檔案/資料夾結構
-LOG_DIR = "logs/high_concurrency"
-SUMMARY_DIR = "summary/high_concurrency"
+LOG_DIR = "results/logs/high_concurrency"
+SUMMARY_DIR = "results/summary/high_concurrency"
 os.makedirs(LOG_DIR, exist_ok=True)
 os.makedirs(SUMMARY_DIR, exist_ok=True)
 

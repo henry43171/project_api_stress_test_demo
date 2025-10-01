@@ -18,8 +18,8 @@ USERS_PER_INTERVAL = cfg["USERS_PER_INTERVAL"]
 MAX_WORKERS = cfg["MAX_WORKERS"]
 
 # 檔案/資料夾結構 (維持硬編碼)
-LOG_DIR = "logs/long_duration"
-SUMMARY_DIR = "summary/long_duration"
+LOG_DIR = "results/logs/long_duration"
+SUMMARY_DIR = "results/summary/long_duration"
 os.makedirs(LOG_DIR, exist_ok=True)
 os.makedirs(SUMMARY_DIR, exist_ok=True)
 

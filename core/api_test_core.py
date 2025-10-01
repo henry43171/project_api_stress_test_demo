@@ -22,8 +22,8 @@ USER_ACTIONS = [(a["action"], a["weight"]) for a in config.get("USER_ACTIONS", [
 
 # --- 建立目錄 & 檔名 ---
 timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-log_dir = os.path.join("logs", "core")
-summary_dir = os.path.join("summary", "core")
+log_dir = os.path.join("results/logs", "core")
+summary_dir = os.path.join("results/summary", "core")
 os.makedirs(log_dir, exist_ok=True)
 os.makedirs(summary_dir, exist_ok=True)
 
