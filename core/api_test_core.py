@@ -37,14 +37,25 @@ def make_request(method, url, **kwargs):
             else:
                 return {"error": str(e)}
 
-# --- fail probability ---
-def calculate_fail_probability(num_users, threshold=3000, max_fail=0.9, steepness=0.002):
-    base = 0.01
-    x = num_users - threshold
-    prob = base + (max_fail - base) / (1 + math.exp(-steepness * x))
-    noise = random.uniform(-0.1, 0.1) * prob
+# pass probability
+def calculate_pass_probability(num_users, threshold=300, drop_per_user=0.1, noise_frac=0.05):
+    """
+    極簡分段：
+    - num_users <= threshold: pass_rate = 1.0
+    - num_users > threshold: pass_rate = max(0.0, 1 - (num_users - threshold) * drop_per_user)
+      並加上 +/- noise_frac 隨機波動（相對於計算出的 pass_rate）
+    """
+    if num_users <= threshold:
+        prob = 1.0
+    else:
+        prob = max(0.0, 1.0 - (num_users - threshold) * drop_per_user)
+
+    # 加上少量相對噪聲
+    noise = random.uniform(-noise_frac, noise_frac) * prob
     prob = prob + noise
-    return max(0.0, min(prob, max_fail))
+    return max(0.0, min(prob, 1.0))
+
+
 
 def simulate_user(user_id, form_data, current_num_users=NUM_USERS, execute_api=True):
     """
@@ -58,9 +69,9 @@ def simulate_user(user_id, form_data, current_num_users=NUM_USERS, execute_api=T
     result = None
     success = True
 
-    fail_probability = calculate_fail_probability(current_num_users, threshold=3000)
+    pass_probability = calculate_pass_probability(current_num_users, threshold=300)
 
-    if random.random() < fail_probability:
+    if random.random() > pass_probability:
         elapsed_total = random.uniform(0.1, 2.0)
         if execute_api:
             logging.info(
