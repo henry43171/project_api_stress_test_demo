@@ -37,7 +37,7 @@ def make_request(method, url, **kwargs):
             else:
                 return {"error": str(e)}
 
-# --- 斷差 fail probability ---
+# --- fail probability ---
 def calculate_fail_probability(num_users, threshold=3000, max_fail=0.9, steepness=0.002):
     base = 0.01
     x = num_users - threshold
@@ -46,7 +46,11 @@ def calculate_fail_probability(num_users, threshold=3000, max_fail=0.9, steepnes
     prob = prob + noise
     return max(0.0, min(prob, max_fail))
 
-def simulate_user(user_id, form_data, current_num_users=NUM_USERS):
+def simulate_user(user_id, form_data, current_num_users=NUM_USERS, execute_api=True):
+    """
+    模擬使用者行為
+    - execute_api: False 時不發送 HTTP 請求，只做模擬計算
+    """
     start_total = time.time()
     actions_taken = []
     status_codes = []
@@ -58,10 +62,11 @@ def simulate_user(user_id, form_data, current_num_users=NUM_USERS):
 
     if random.random() < fail_probability:
         elapsed_total = random.uniform(0.1, 2.0)
-        logging.info(
-            "User %d - Action: %s, Result: FAIL (simulated due to load), Time: %.2fs",
-            user_id, [], elapsed_total
-        )
+        if execute_api:
+            logging.info(
+                "User %d - Action: %s, Result: FAIL (simulated due to load), Time: %.2fs",
+                user_id, [], elapsed_total
+            )
         return {
             "user_id": user_id,
             "actions": [],
@@ -72,12 +77,35 @@ def simulate_user(user_id, form_data, current_num_users=NUM_USERS):
             "result": {"error": "Simulated failure due to load"}
         }
 
-    action = random.choices(
-        [a[0] for a in USER_ACTIONS],
-        weights=[a[1] for a in USER_ACTIONS]
-    )[0]
+    if not execute_api:
+        # 只模擬，不打 API
+        elapsed_total = random.uniform(0.5, 2.0)
+        action = random.choices(
+            [a[0] for a in USER_ACTIONS],
+            weights=[a[1] for a in USER_ACTIONS]
+        )[0]
+        actions_taken.append(action)
+        success = True
+        status_codes = [200] * len(actions_taken)
+        filled_form = {k: form_data[k] for k in ("gender", "age_group", "feedback", "willing")}
+        result = {"simulated": True}
+        return {
+            "user_id": user_id,
+            "actions": actions_taken,
+            "success": "PASS",
+            "status_codes": status_codes,
+            "elapsed": elapsed_total,
+            "filled_form": filled_form,
+            "result": result
+        }
 
+    # --- 原本 API 行為模擬 ---
     try:
+        action = random.choices(
+            [a[0] for a in USER_ACTIONS],
+            weights=[a[1] for a in USER_ACTIONS]
+        )[0]
+
         if action in ("visit_home", "fill_form"):
             time.sleep(random.uniform(0.1, 0.5))
             r1 = make_request("GET", f"{BASE_URL}/landing_page")
@@ -95,21 +123,13 @@ def simulate_user(user_id, form_data, current_num_users=NUM_USERS):
                 success = False
 
             time.sleep(random.uniform(0.2, 0.7))
-            filled_form = {
-                "gender": form_data["gender"],
-                "age_group": form_data["age_group"],
-                "feedback": form_data["feedback"],
-                "willing": form_data["willing"]
-            }
+            filled_form = {k: form_data[k] for k in ("gender", "age_group", "feedback", "willing")}
             r3 = make_request("POST", f"{BASE_URL}/submit_form", json=filled_form)
             status_codes.append(r3.status_code if hasattr(r3, "status_code") else None)
             actions_taken.append("submit_form")
             if getattr(r3, "status_code", 0) != 200:
                 success = False
-            if getattr(r3, "status_code", 0) == 200:
-                result = r3.json()
-            else:
-                result = {"error": f"Status code {getattr(r3, 'status_code', 'N/A')}"}
+            result = r3.json() if getattr(r3, "status_code", 0) == 200 else {"error": f"Status code {getattr(r3, 'status_code', 'N/A')}"}
 
         elif action == "refresh_page":
             time.sleep(random.uniform(0.1, 0.3))
@@ -125,13 +145,14 @@ def simulate_user(user_id, form_data, current_num_users=NUM_USERS):
 
     elapsed_total = time.time() - start_total
 
-    logging.info(
-        "User %d - Action: %s, Result: %s, Time: %.2fs, Status: %s, Payload: %s, Response: %s",
-        user_id, actions_taken, "PASS" if success else "FAIL",
-        elapsed_total, status_codes,
-        filled_form if filled_form else {},
-        result if result else {}
-    )
+    if execute_api:
+        logging.info(
+            "User %d - Action: %s, Result: %s, Time: %.2fs, Status: %s, Payload: %s, Response: %s",
+            user_id, actions_taken, "PASS" if success else "FAIL",
+            elapsed_total, status_codes,
+            filled_form if filled_form else {},
+            result if result else {}
+        )
 
     return {
         "user_id": user_id,

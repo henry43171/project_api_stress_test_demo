@@ -31,7 +31,7 @@ def run_high_concurrency_test(num_users):
         batch_forms = forms_to_use[i:i+BATCH_SIZE]
         max_workers = min(len(batch_forms), MAX_WORKERS)
         with ThreadPoolExecutor(max_workers=max_workers) as executor:
-            futures = [executor.submit(simulate_user, i+j+1, batch_forms[j]) for j in range(len(batch_forms))]
+            futures = [executor.submit(simulate_user, i+j+1, batch_forms[j], execute_api=False) for j in range(len(batch_forms))]
             for future in as_completed(futures):
                 results.append(future.result())
         time.sleep(BATCH_DELAY)
@@ -39,15 +39,19 @@ def run_high_concurrency_test(num_users):
     end_total = time.time()
 
     # 統計
-    total_pass = sum(1 for r in results if r["success"] == "PASS")
+    total_pass = sum(1 for r in results if r.get("success") == "PASS")
     total_fail = num_users - total_pass
-    avg_time = sum(r["elapsed"] for r in results) / len(results)
-    max_time = max(r["elapsed"] for r in results)
+    avg_time = sum(r.get("elapsed", 0) for r in results) / len(results)
+    max_time = max(r.get("elapsed", 0) for r in results)
 
-    stage_times = {"visit_home": [], "start_form": [], "submit_form": [], "refresh_page": []}
+    # stage_times 自動擴展
+    stage_times = {}
     for r in results:
-        for act in r["actions"]:
-            stage_times[act].append(r["elapsed"])
+        actions = r.get("actions") or []
+        for act in actions:
+            if act not in stage_times:
+                stage_times[act] = []
+            stage_times[act].append(r.get("elapsed", 0))
 
     stage_avg_times = {stage: (sum(times)/len(times) if times else None) for stage, times in stage_times.items()}
 

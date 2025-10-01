@@ -17,7 +17,7 @@ UNIT_INTERVAL_SEC = cfg["UNIT_INTERVAL_SEC"]
 USERS_PER_INTERVAL = cfg["USERS_PER_INTERVAL"]
 MAX_WORKERS = cfg["MAX_WORKERS"]
 
-# 檔案/資料夾結構 (維持硬編碼)
+# 檔案/資料夾結構
 LOG_DIR = "results/logs/long_duration"
 SUMMARY_DIR = "results/summary/long_duration"
 os.makedirs(LOG_DIR, exist_ok=True)
@@ -40,7 +40,7 @@ def run_long_duration_test():
             batch_forms = forms_to_use[i:i+BATCH_SIZE]
             max_workers = min(len(batch_forms), MAX_WORKERS)
             with ThreadPoolExecutor(max_workers=max_workers) as executor:
-                futures = [executor.submit(simulate_user, i+j+1, batch_forms[j]) for j in range(len(batch_forms))]
+                futures = [executor.submit(simulate_user, i+j+1, batch_forms[j], execute_api=False) for j in range(len(batch_forms))]
                 for future in as_completed(futures):
                     results.append(future.result())
             time.sleep(BATCH_DELAY)
@@ -48,14 +48,19 @@ def run_long_duration_test():
         all_results.extend(results)
 
         # 統計本 interval
-        total_pass = sum(1 for r in results if r["success"] == "PASS")
+        total_pass = sum(1 for r in results if r.get("success") == "PASS")
         total_fail = USERS_PER_INTERVAL - total_pass
-        avg_time = sum(r["elapsed"] for r in results) / len(results)
-        max_time = max(r["elapsed"] for r in results)
-        stage_times = {"visit_home": [], "start_form": [], "submit_form": [], "refresh_page": []}
+        avg_time = sum(r.get("elapsed", 0) for r in results) / len(results)
+        max_time = max(r.get("elapsed", 0) for r in results)
+
+        # stage_times 自動擴展
+        stage_times = {}
         for r in results:
-            for act in r["actions"]:
-                stage_times[act].append(r["elapsed"])
+            actions = r.get("actions") or []
+            for act in actions:
+                if act not in stage_times:
+                    stage_times[act] = []
+                stage_times[act].append(r.get("elapsed", 0))
         stage_avg_times = {stage: (sum(times)/len(times) if times else None) for stage, times in stage_times.items()}
 
         # 檔名時間
