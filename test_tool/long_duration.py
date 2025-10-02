@@ -1,116 +1,152 @@
+# test_tool/long_duration.py
 import os
-import time
 import json
+import time
+import random
 import math
-import csv
-from datetime import datetime, timedelta
+from pathlib import Path
+from datetime import datetime
 from concurrent.futures import ThreadPoolExecutor, as_completed
+from core.api_test_core import visit_landing_page, start_form, submit_form
 
-from core.api_test_core import simulate_user, fake_forms, BATCH_SIZE, BATCH_DELAY
+# ----------------------
+# 假資料
+# ----------------------
+FAKE_DATA_PATH = Path("fake_data/fake_form_data.json")
+with open(FAKE_DATA_PATH, "r", encoding="utf-8") as f:
+    fake_data_list = json.load(f)
+data = fake_data_list[0]
 
-# 載入設定檔
-with open("config/long_duration.json", "r", encoding="utf-8") as f:
+# ----------------------
+# 長時間設定
+# ----------------------
+LD_CONFIG_PATH = Path("config/long_duration.json")
+with open(LD_CONFIG_PATH, "r", encoding="utf-8") as f:
     cfg = json.load(f)
 
-DURATION_MINUTES = cfg["DURATION_MINUTES"]
-UNIT_INTERVAL_SEC = cfg["UNIT_INTERVAL_SEC"]
-USERS_PER_INTERVAL = cfg["USERS_PER_INTERVAL"]
-MAX_WORKERS = cfg["MAX_WORKERS"]
+TOTAL_TIME = cfg["total_time"]
+UNIT_TIME = cfg["unit_time"]
+UNIT_USERS = cfg.get("unit_users", 10)
+PEAKS = cfg.get("peaks", [])
+AMPLITUDE = cfg.get("amplitude", 0.5)
+NOISE = cfg.get("noise", 0.1)
+SUCCESS_THRESHOLDS = cfg.get("success_thresholds", [0.95, 0.7])
+DECAY_RATE = cfg.get("decay_rate", 0.01)
 
-# 檔案/資料夾結構
-LOG_DIR = "results/logs/long_duration"
-SUMMARY_DIR = "results/summary/long_duration"
-os.makedirs(LOG_DIR, exist_ok=True)
-os.makedirs(SUMMARY_DIR, exist_ok=True)
+# ----------------------
+# 檔案路徑
+# ----------------------
+LOG_DIR = Path("results/logs/long_duration")
+SUMMARY_DIR = Path("results/summary/long_duration")
+LOG_DIR.mkdir(parents=True, exist_ok=True)
+SUMMARY_DIR.mkdir(parents=True, exist_ok=True)
 
-def run_long_duration_test():
-    total_intervals = math.ceil(DURATION_MINUTES * 60 / UNIT_INTERVAL_SEC)
-    interval_count = 0
+timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+summary_file = SUMMARY_DIR / f"summary_{timestamp}_total{TOTAL_TIME}_unit{UNIT_TIME}.json"
+
+# ----------------------
+# 工具函式
+# ----------------------
+def generate_load_ratios(num_periods, peaks, amplitude, noise):
+    ratios = []
+    for t in range(num_periods):
+        base = 1.0 + amplitude * math.sin(2 * math.pi * t / num_periods)
+        if t in peaks:
+            base *= 1.5
+        jitter = random.uniform(-noise, noise)
+        ratios.append(max(0.1, base + jitter))
+    return ratios
+
+def simulate_success(users, thresholds=SUCCESS_THRESHOLDS, decay=DECAY_RATE):
+    high, low = thresholds
+    prob = max(low, high - decay * users)
+    return random.random() < prob
+
+def user_test(index, total_users):
+    result = {"user": index, "steps": [], "success": True, "total_time": 0.0}
+    start_time = time.time()
+    try:
+        for step_name, func in [("landing_page", visit_landing_page),
+                                ("start_form", start_form),
+                                ("submit_form", lambda: submit_form(data))]:
+            r, elapsed = func()
+            step_success = r.status_code == 200 and simulate_success(total_users)
+            result["steps"].append({"step": step_name, "success": step_success, "time": elapsed})
+            if not step_success:
+                result["success"] = False
+
+        result["total_time"] = time.time() - start_time
+    except Exception as e:
+        result["success"] = False
+        result["error"] = str(e)
+    return result
+
+# ----------------------
+# 主流程
+# ----------------------
+def run_long_duration():
+    if TOTAL_TIME % UNIT_TIME != 0:
+        raise ValueError("total_time 必須能被 unit_time 整除")
+
+    num_periods = TOTAL_TIME // UNIT_TIME
+    ratios = generate_load_ratios(num_periods, PEAKS, AMPLITUDE, NOISE)
+
     all_results = []
+    period_stats = []
 
-    while interval_count < total_intervals:
-        interval_count += 1
-        print(f"({interval_count}/{total_intervals}) Running long duration test interval, simulating {USERS_PER_INTERVAL} users...")
+    for period, ratio in enumerate(ratios, start=1):
+        num_users = int(UNIT_USERS * ratio)
+        period_results = []
 
-        results = []
-        forms_to_use = fake_forms[:USERS_PER_INTERVAL]
+        log_file = LOG_DIR / f"longrun_{timestamp}_total{TOTAL_TIME}_unit{UNIT_TIME}_p{period:02d}.log"
 
-        # 分批次
-        for i in range(0, USERS_PER_INTERVAL, BATCH_SIZE):
-            batch_forms = forms_to_use[i:i+BATCH_SIZE]
-            max_workers = min(len(batch_forms), MAX_WORKERS)
-            with ThreadPoolExecutor(max_workers=max_workers) as executor:
-                futures = [executor.submit(simulate_user, i+j+1, batch_forms[j], execute_api=False) for j in range(len(batch_forms))]
-                for future in as_completed(futures):
-                    results.append(future.result())
-            time.sleep(BATCH_DELAY)
+        with ThreadPoolExecutor(max_workers=num_users) as executor:
+            futures = [executor.submit(user_test, i, num_users) for i in range(num_users)]
+            for f in as_completed(futures):
+                res = f.result()
+                period_results.append(res)
 
-        all_results.extend(results)
-
-        # 統計本 interval
-        total_pass = sum(1 for r in results if r.get("success") == "PASS")
-        total_fail = USERS_PER_INTERVAL - total_pass
-        avg_time = sum(r.get("elapsed", 0) for r in results) / len(results)
-        max_time = max(r.get("elapsed", 0) for r in results)
-
-        # stage_times 自動擴展
-        stage_times = {}
-        for r in results:
-            actions = r.get("actions") or []
-            for act in actions:
-                if act not in stage_times:
-                    stage_times[act] = []
-                stage_times[act].append(r.get("elapsed", 0))
-        stage_avg_times = {stage: (sum(times)/len(times) if times else None) for stage, times in stage_times.items()}
-
-        # 檔名時間
-        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        log_file = os.path.join(LOG_DIR, f"ld_{timestamp}.log")
-        summary_file_json = os.path.join(
-            SUMMARY_DIR, 
-            f"summary_duration_{USERS_PER_INTERVAL}users_{DURATION_MINUTES}m_{timestamp}.json"
-        )
-        summary_file_csv = os.path.join(
-            SUMMARY_DIR, 
-            f"summary_duration_{USERS_PER_INTERVAL}users_{DURATION_MINUTES}m_{timestamp}.csv"
-        )
-
-        # 寫 log
+        # 儲存該 period 的 log
         with open(log_file, "w", encoding="utf-8") as f:
-            for r in results:
-                f.write(json.dumps(r, ensure_ascii=False) + "\n")
+            for res in period_results:
+                f.write(json.dumps(res, ensure_ascii=False) + "\n")
 
-        # 寫 summary JSON
-        summary = {
-            "timestamp": timestamp,
-            "interval": interval_count,
-            "users": USERS_PER_INTERVAL,
-            "pass": total_pass,
-            "fail": total_fail,
-            "avg_response_time": avg_time,
-            "max_response_time": max_time,
-            "stage_avg_times": stage_avg_times,
-            "interval_start": (datetime.now() - timedelta(seconds=UNIT_INTERVAL_SEC)).strftime("%Y-%m-%d %H:%M:%S"),
-            "interval_end": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        }
-        with open(summary_file_json, "w", encoding="utf-8") as f:
-            json.dump(summary, f, ensure_ascii=False, indent=2)
+        # 計算 period 統計
+        successes = sum(1 for r in period_results if r["success"])
+        avg_time = sum(r["total_time"] for r in period_results) / max(1, len(period_results))
+        success_rate = successes / max(1, len(period_results))
 
-        # 寫 summary CSV (單行)
-        with open(summary_file_csv, "w", newline="", encoding="utf-8") as f:
-            writer = csv.writer(f)
-            header = ["timestamp","interval","users","pass","fail","avg_response_time","max_response_time"] + list(stage_avg_times.keys()) + ["interval_start","interval_end"]
-            writer.writerow(header)
-            writer.writerow([
-                timestamp, interval_count, USERS_PER_INTERVAL, total_pass, total_fail,
-                avg_time, max_time
-            ] + list(stage_avg_times.values()) + [summary["interval_start"], summary["interval_end"]])
+        period_stats.append({
+            "period": period,
+            "users": num_users,
+            "success_rate": success_rate,
+            "avg_time": avg_time
+        })
 
-        # 分段顯示完成訊息
-        print(f"Interval {interval_count} completed.")
-        print(f"Log: {log_file},")
-        print(f"Summary(JSON): {summary_file_json},")
-        print(f"Summary(CSV): {summary_file_csv}\n")
+        all_results.extend(period_results)
+        print(f"[Period {period}/{num_periods}] Users={num_users}, Success={success_rate:.2f}, AvgTime={avg_time:.2f}")
+
+        time.sleep(UNIT_TIME)
+
+    # ----------------------
+    # 全域統計
+    # ----------------------
+    total = len(all_results)
+    successes = sum(1 for r in all_results if r["success"])
+    avg_time = sum(r["total_time"] for r in all_results) / total
+
+    summary = {
+        "total_users": total,
+        "success_rate": successes / total,
+        "avg_time": avg_time,
+        "period_stats": period_stats
+    }
+
+    with open(summary_file, "w", encoding="utf-8") as f:
+        json.dump(summary, f, indent=2, ensure_ascii=False)
+
+    print(f"----------------- Long duration test finished -----------------")
+    print(f"Summary: {summary_file}\n")
 
 if __name__ == "__main__":
-    run_long_duration_test()
+    run_long_duration()

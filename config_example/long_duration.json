@@ -1,6 +1,10 @@
 {
-  "DURATION_MINUTES": 1,
-  "UNIT_INTERVAL_SEC": 20,
-  "USERS_PER_INTERVAL": 50,
-  "MAX_WORKERS": 10
+  "total_time": 120,
+  "unit_time": 10,
+  "unit_users": 20,
+  "peaks": [2, 5],
+  "amplitude": 0.5,
+  "noise": 0.1,
+  "success_thresholds": [1, 0.7],
+  "decay_rate": 0.01
 }
