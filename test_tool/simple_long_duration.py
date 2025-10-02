@@ -8,7 +8,6 @@ from pathlib import Path
 from datetime import datetime
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from core.simple_api_test_core import visit_landing_page, start_form, submit_form
-import logging
 
 # ----------------------
 # 假資料
@@ -43,14 +42,7 @@ LOG_DIR.mkdir(parents=True, exist_ok=True)
 SUMMARY_DIR.mkdir(parents=True, exist_ok=True)
 
 timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-log_file = LOG_DIR / f"longrun_{timestamp}_total{TOTAL_TIME}_unit{UNIT_TIME}.log"
 summary_file = SUMMARY_DIR / f"summary_{timestamp}_total{TOTAL_TIME}_unit{UNIT_TIME}.json"
-
-logging.basicConfig(
-    filename=log_file,
-    level=logging.INFO,
-    format="%(message)s"
-)
 
 # ----------------------
 # 工具函式
@@ -100,24 +92,44 @@ def run_long_duration():
     ratios = generate_load_ratios(num_periods, PEAKS, AMPLITUDE, NOISE)
 
     all_results = []
+    period_stats = []
+
     for period, ratio in enumerate(ratios, start=1):
         num_users = int(UNIT_USERS * ratio)
         period_results = []
+
+        log_file = LOG_DIR / f"longrun_{timestamp}_total{TOTAL_TIME}_unit{UNIT_TIME}_p{period:02d}.log"
 
         with ThreadPoolExecutor(max_workers=num_users) as executor:
             futures = [executor.submit(user_test, i, num_users) for i in range(num_users)]
             for f in as_completed(futures):
                 res = f.result()
                 period_results.append(res)
-                logging.info(json.dumps({"period": period, "result": res}))
+
+        # 儲存該 period 的 log
+        with open(log_file, "w", encoding="utf-8") as f:
+            for res in period_results:
+                f.write(json.dumps(res, ensure_ascii=False) + "\n")
+
+        # 計算 period 統計
+        successes = sum(1 for r in period_results if r["success"])
+        avg_time = sum(r["total_time"] for r in period_results) / max(1, len(period_results))
+        success_rate = successes / max(1, len(period_results))
+
+        period_stats.append({
+            "period": period,
+            "users": num_users,
+            "success_rate": success_rate,
+            "avg_time": avg_time
+        })
 
         all_results.extend(period_results)
-        print(f"[Period {period}/{num_periods}] Users={num_users} Done.")
+        print(f"[Period {period}/{num_periods}] Users={num_users}, Success={success_rate:.2f}, AvgTime={avg_time:.2f}")
 
         time.sleep(UNIT_TIME)
 
     # ----------------------
-    # 統計
+    # 全域統計
     # ----------------------
     total = len(all_results)
     successes = sum(1 for r in all_results if r["success"])
@@ -127,15 +139,13 @@ def run_long_duration():
         "total_users": total,
         "success_rate": successes / total,
         "avg_time": avg_time,
-        "failed_periods": [p for p in range(1, num_periods+1)
-                           if any(not r["success"] for r in all_results)]
+        "period_stats": period_stats
     }
 
     with open(summary_file, "w", encoding="utf-8") as f:
         json.dump(summary, f, indent=2, ensure_ascii=False)
 
     print(f"----------------- Long duration test finished -----------------")
-    print(f"Log: {log_file}")
     print(f"Summary: {summary_file}\n")
 
 if __name__ == "__main__":
