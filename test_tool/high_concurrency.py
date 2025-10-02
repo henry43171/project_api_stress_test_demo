@@ -1,8 +1,9 @@
+# test_tool/high_concurrency.py
 import os
 import time
 import json
 from concurrent.futures import ThreadPoolExecutor, as_completed
-from core.api_test_core import simulate_user, fake_forms, BATCH_SIZE, BATCH_DELAY
+from core.api_test_core import simulate_user, fake_forms, BATCH_SIZE, BATCH_DELAY, calculate_pass_probability
 from datetime import datetime
 import csv
 
@@ -26,12 +27,26 @@ def run_high_concurrency_test(num_users):
 
     forms_to_use = fake_forms[:num_users]
 
+    # 計算批次通過率
+    pass_probability = calculate_pass_probability(num_users, threshold_start=30, threshold_end=50)
+
     # 分批次
     for i in range(0, num_users, BATCH_SIZE):
         batch_forms = forms_to_use[i:i+BATCH_SIZE]
         max_workers = min(len(batch_forms), MAX_WORKERS)
         with ThreadPoolExecutor(max_workers=max_workers) as executor:
-            futures = [executor.submit(simulate_user, i+j+1, batch_forms[j], execute_api=False) for j in range(len(batch_forms))]
+            # 傳遞 current_num_users 和 pass_probability
+            futures = [
+                executor.submit(
+                    simulate_user,
+                    i+j+1,
+                    batch_forms[j],
+                    current_num_users=num_users,
+                    execute_api=False,
+                    pass_probability=pass_probability
+                )
+                for j in range(len(batch_forms))
+            ]
             for future in as_completed(futures):
                 results.append(future.result())
         time.sleep(BATCH_DELAY)

@@ -73,11 +73,13 @@ def calculate_pass_probability(
     return max(0.0, min(pass_rate, 1.0))
 
 
-def simulate_user(user_id, form_data, current_num_users=NUM_USERS, execute_api=True):
+def simulate_user(user_id, form_data, current_num_users=NUM_USERS, execute_api=True, pass_probability=None):
     """
     模擬使用者行為
     - execute_api: False 時不發送 HTTP 請求，只做模擬計算
+    - pass_probability: 可直接傳入，若為 None 則依 current_num_users 計算
     """
+
     start_total = time.time()
     actions_taken = []
     status_codes = []
@@ -85,7 +87,9 @@ def simulate_user(user_id, form_data, current_num_users=NUM_USERS, execute_api=T
     result = None
     success = True
 
-    pass_probability = calculate_pass_probability(current_num_users, threshold_start=30, threshold_end=50)
+    # 使用傳入的 pass_probability，如果沒有就自己計算
+    if pass_probability is None:
+        pass_probability = calculate_pass_probability(current_num_users, threshold_start=30, threshold_end=50)
 
     if random.random() > pass_probability:
         elapsed_total = random.uniform(0.1, 2.0)
@@ -103,7 +107,6 @@ def simulate_user(user_id, form_data, current_num_users=NUM_USERS, execute_api=T
             "filled_form": filled_form,
             "result": {"error": "Simulated failure due to load"}
         }
-
     if not execute_api:
         # 只模擬，不打 API
         elapsed_total = random.uniform(0.5, 2.0)
