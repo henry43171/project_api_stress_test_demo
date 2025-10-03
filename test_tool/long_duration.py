@@ -18,23 +18,23 @@ with open(FAKE_DATA_PATH, "r", encoding="utf-8") as f:
 data = fake_data_list[0]
 
 # ----------------------
-# 長時間設定
+# 讀取長時間設定
 # ----------------------
 LD_CONFIG_PATH = Path("config/long_duration.json")
 with open(LD_CONFIG_PATH, "r", encoding="utf-8") as f:
-    cfg = json.load(f)
+    ld_config = json.load(f)
 
-TOTAL_TIME = cfg["total_time"]
-UNIT_TIME = cfg["unit_time"]
-UNIT_USERS = cfg.get("unit_users", 10)
-PEAKS = cfg.get("peaks", [])
-AMPLITUDE = cfg.get("amplitude", 0.5)
-NOISE = cfg.get("noise", 0.1)
-SUCCESS_THRESHOLDS = cfg.get("success_thresholds", [0.95, 0.7])
-DECAY_RATE = cfg.get("decay_rate", 0.01)
+TOTAL_TIME = ld_config["total_time"]
+UNIT_TIME = ld_config["unit_time"]
+UNIT_USERS = ld_config.get("unit_users", 10)
+PEAKS = ld_config.get("peaks", [])
+AMPLITUDE = ld_config.get("amplitude", 0.5)
+NOISE = ld_config.get("noise", 0.1)
+SUCCESS_THRESHOLDS = ld_config.get("success_thresholds", [0.95, 0.7])
+DECAY_RATE = ld_config.get("decay_rate", 0.01)
 
 # ----------------------
-# 檔案路徑
+# 設定log存放位置
 # ----------------------
 LOG_DIR = Path("results/logs/long_duration")
 SUMMARY_DIR = Path("results/summary/long_duration")
