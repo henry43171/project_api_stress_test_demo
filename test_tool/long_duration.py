@@ -47,47 +47,46 @@ summary_file = SUMMARY_DIR / f"summary_{timestamp}_total{TEST_TOTAL_TIME}_unit{T
 # ----------------------
 # 工具函式
 # ----------------------
-def generate_load_ratios(num_periods, peaks, amplitude, noise):
-    ratios = []
-    for t in range(num_periods):
-        base = 1.0 + amplitude * math.sin(2 * math.pi * t / num_periods)
-        if t in peaks:
-            base *= 1.5
-        jitter = random.uniform(-noise, noise)
-        ratios.append(max(0.1, base + jitter))
-    return ratios
-
-
-def simulate_success(users, thresholds=SUCCESS_THRESHOLDS, decay=DECAY_RATE):
+def period_user(period_index: int, num_periods: int) -> int:
     """
-    模擬操作成功與否。
-
-    成功率會隨著使用者數量增加而衰減，但不低於設定的最低成功率。
-
-    Parameters
-    ----------
-    users : int
-        當前使用者數量。
-    thresholds : list of float, optional
-        [最高成功率, 最低成功率]，預設為 SUCCESS_THRESHOLDS。
-    decay : float, optional
-        成功率衰減值，預設為 DECAY_RATE。
-
-    Returns
-    -------
-    bool
-        模擬是否成功。True 表示成功，False 表示失敗。
+    人數生成：
+    - 基準人數：UNIT_USERS
+    - 加上正弦曲線模擬高峰
+    - peaks 可提高特定時段的人數
+    - noise 加入隨機擾動
     """
-    # 拆解成功率上下限
-    high, low = thresholds
+    # 基準人數
+    base = UNIT_USERS
 
-    # 計算隨著使用者數量衰減後的成功率，並確保不低於最低成功率
-    prob = max(low, high - decay * users)
+    # 正弦波調整 (週期 = num_periods)
+    angle = (2 * math.pi * period_index) / num_periods
+    sine_factor = 1 + AMPLITUDE * math.sin(angle)
 
-    # 以 prob 為成功機率，隨機判斷是否成功
+    # peaks 額外加權
+    peak_bonus = 3 if period_index in PEAKS else 1.0
+
+    # noise 隨機擾動
+    noise_factor = 1 + random.uniform(-NOISE, NOISE)
+
+    # 計算人數（至少 1 人）
+    users = max(1, int(base * sine_factor * peak_bonus * noise_factor))
+    return users
+
+
+def simulate_success(users: int) -> bool:
+    """
+    成功率模擬：
+    - 根據人數，從高閾值逐漸衰減到低閾值
+    - 模型：prob = max(low, high - decay * users)
+    """
+    high, low = SUCCESS_THRESHOLDS
+    prob = max(low, high - DECAY_RATE * users)
     return random.random() < prob
 
 
+# ----------------------
+# 單人流程封裝
+# ----------------------
 def user_test(index, total_users):
     result = {"user": index, "steps": [], "success": True, "TEST_TOTAL_TIME": 0.0}
     start_time = time.time()
@@ -112,48 +111,40 @@ def user_test(index, total_users):
 # 主流程
 # ----------------------
 def run_long_duration():
+    num_periods = TEST_TOTAL_TIME // TEST_UNIT_TIME
     if TEST_TOTAL_TIME % TEST_UNIT_TIME != 0:
         raise ValueError("TEST_TOTAL_TIME 必須能被 TEST_UNIT_TIME 整除")
-
-    num_periods = TEST_TOTAL_TIME // TEST_UNIT_TIME
-    ratios = generate_load_ratios(num_periods, PEAKS, AMPLITUDE, NOISE)
 
     all_results = []
     period_stats = []
 
-    for period, ratio in enumerate(ratios, start=1):
-        num_users = int(UNIT_USERS * ratio)
+    for p in range(num_periods):
+        users = period_user(p, num_periods)
         period_results = []
 
-        log_file = LOG_DIR / f"longrun_{timestamp}_total{TEST_TOTAL_TIME}_unit{TEST_UNIT_TIME}_p{period:02d}.log"
+        with ThreadPoolExecutor() as executor:
+            futures = [executor.submit(user_test, i, users) for i in range(users)]
+            for future in as_completed(futures):
+                period_results.append(future.result())
 
-        with ThreadPoolExecutor(max_workers=num_users) as executor:
-            futures = [executor.submit(user_test, i, num_users) for i in range(num_users)]
-            for f in as_completed(futures):
-                res = f.result()
-                period_results.append(res)
-
-        # 儲存該 period 的 log
-        with open(log_file, "w", encoding="utf-8") as f:
-            for res in period_results:
-                f.write(json.dumps(res, ensure_ascii=False) + "\n")
-
-        # 計算 period 統計
+        # 單位時間統計
         successes = sum(1 for r in period_results if r["success"])
-        avg_time = sum(r["TEST_TOTAL_TIME"] for r in period_results) / max(1, len(period_results))
-        success_rate = successes / max(1, len(period_results))
-
-        period_stats.append({
-            "period": period,
-            "users": num_users,
-            "success_rate": success_rate,
+        avg_time = sum(r["TEST_TOTAL_TIME"] for r in period_results) / len(period_results)
+        stat = {
+            "period": p,
+            "users": users,
+            "success_rate": successes / len(period_results),
             "avg_time": avg_time
-        })
+        }
+        period_stats.append(stat)
+
+        # 寫入 log
+        log_file = LOG_DIR / f"longrun_{timestamp}_p{p}_users{users}.json"
+        with open(log_file, "w", encoding="utf-8") as f:
+            json.dump(period_results, f, indent=2, ensure_ascii=False)
 
         all_results.extend(period_results)
-        print(f"[Period {period}/{num_periods}] Users={num_users}, Success={success_rate:.2f}, AvgTime={avg_time:.2f}")
-
-        time.sleep(TEST_UNIT_TIME)
+        print(f"[Period {p}] Users={users}, Success={stat['success_rate']:.2f}, AvgTime={avg_time:.2f}s")
 
     # ----------------------
     # 全域統計
