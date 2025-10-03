@@ -32,9 +32,9 @@ def landing_page():
 
 
 # ----------------------
-# POST /start_form
+# GET /start_form
 # ----------------------
-@app.route("/start_form", methods=["POST"])
+@app.route("/start_form", methods=["GET"])
 def start_form():
     """
     使用者點擊「填寫表單」按鈕，回傳空表單

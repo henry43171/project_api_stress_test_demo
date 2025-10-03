@@ -33,7 +33,7 @@ def visit_landing_page():
 
 def start_form():
     t0 = time.time()
-    r = requests.post(f"{BASE_URL}/start_form")
+    r = requests.get(f"{BASE_URL}/start_form")
     elapsed = time.time() - t0
     return r, elapsed
 
@@ -57,7 +57,7 @@ def core_test(data, index=0):
 
         # 2. 點擊填表按鈕，拿到空表單
         r2, elapsed = start_form()
-        log_result(index, "POST /start_form", r2.status_code == 200, elapsed)
+        log_result(index, "GET /start_form", r2.status_code == 200, elapsed)
 
         # 3. 送出表單
         r3, elapsed = submit_form(data)
