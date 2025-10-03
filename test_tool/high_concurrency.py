@@ -1,57 +1,94 @@
-# test_tool/high_concurrency.py
+# test_tool/long_duration.py
 import os
 import json
 import time
 import random
+import math
 from pathlib import Path
 from datetime import datetime
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from core.api_test_core import visit_landing_page, start_form, submit_form
-import logging
 
 # ----------------------
-# 讀取假資料
+# 假資料
 # ----------------------
 FAKE_DATA_PATH = Path("fake_data/fake_form_data.json")
 with open(FAKE_DATA_PATH, "r", encoding="utf-8") as f:
     fake_data_list = json.load(f)
-
 data = fake_data_list[0]
 
 # ----------------------
-# 讀取高併發設定
+# 讀取長時間設定
 # ----------------------
-HC_CONFIG_PATH = Path("config/high_concurrency.json")
-with open(HC_CONFIG_PATH, "r", encoding="utf-8") as f:
-    hc_config = json.load(f)
+LD_CONFIG_PATH = Path("config/long_duration.json")
+with open(LD_CONFIG_PATH, "r", encoding="utf-8") as f:
+    ld_config = json.load(f)
 
-NUM_USERS_LIST = hc_config.get("num_users", [10, 20, 30, 40, 50])
-SUCCESS_THRESHOLDS = tuple(hc_config.get("success_thresholds", [30, 50]))
-DECAY_RATE = hc_config.get("decay_rate", 0.7)
+TOTAL_TIME = ld_config["total_time"]
+UNIT_TIME = ld_config["unit_time"]
+UNIT_USERS = ld_config.get("unit_users", 10)
+PEAKS = ld_config.get("peaks", [])
+AMPLITUDE = ld_config.get("amplitude", 0.5)
+NOISE = ld_config.get("noise", 0.1)
+SUCCESS_THRESHOLDS = ld_config.get("success_thresholds", [0.95, 0.7])
+DECAY_RATE = ld_config.get("decay_rate", 0.01)
 
 # ----------------------
 # 設定log存放位置
 # ----------------------
-LOG_DIR = Path("results/logs/high_concurrency")
+LOG_DIR = Path("results/logs/long_duration")
+SUMMARY_DIR = Path("results/summary/long_duration")
 LOG_DIR.mkdir(parents=True, exist_ok=True)
-SUMMARY_DIR = Path("results/summary/high_concurrency")
 SUMMARY_DIR.mkdir(parents=True, exist_ok=True)
 
-# ----------------------
-# 成功率模擬
-# ----------------------
-def simulate_success(n, thresholds=SUCCESS_THRESHOLDS, decay=DECAY_RATE):
-    if n <= thresholds[0]:
-        return True
-    elif thresholds[0] < n <= thresholds[1]:
-        return random.random() < decay ** (n - thresholds[0])
-    else:
-        return random.random() < 0.1
+timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+summary_file = SUMMARY_DIR / f"summary_{timestamp}_total{TOTAL_TIME}_unit{UNIT_TIME}.json"
 
 # ----------------------
-# 單一用戶測試封裝
+# 工具函式
 # ----------------------
+def generate_load_ratios(num_periods, peaks, amplitude, noise):
+    ratios = []
+    for t in range(num_periods):
+        base = 1.0 + amplitude * math.sin(2 * math.pi * t / num_periods)
+        if t in peaks:
+            base *= 1.5
+        jitter = random.uniform(-noise, noise)
+        ratios.append(max(0.1, base + jitter))
+    return ratios
+
+
+def simulate_success(users, thresholds=SUCCESS_THRESHOLDS, decay=DECAY_RATE):
+    """
+    模擬操作成功與否。
+
+    成功率會隨著使用者數量增加而衰減，但不低於設定的最低成功率。
+
+    Parameters
+    ----------
+    users : int
+        當前使用者數量。
+    thresholds : list of float, optional
+        [最高成功率, 最低成功率]，預設為 SUCCESS_THRESHOLDS。
+    decay : float, optional
+        成功率衰減值，預設為 DECAY_RATE。
+
+    Returns
+    -------
+    bool
+        模擬是否成功。True 表示成功，False 表示失敗。
+    """
+    high, low = thresholds
+    
+    prob = max(low, high - decay * users)
+    
+    return random.random() < prob
+
+
 def user_test(index, total_users):
+    """
+    單一用戶流程測試
+    """
     result = {"user": index, "steps": [], "success": True, "total_time": 0.0}
     start_time = time.time()
     try:
@@ -65,78 +102,85 @@ def user_test(index, total_users):
                 result["success"] = False
 
         result["total_time"] = time.time() - start_time
-
     except Exception as e:
         result["success"] = False
         result["error"] = str(e)
-
     return result
 
 # ----------------------
-# 高併發執行
+# 主流程
 # ----------------------
-def run_high_concurrency():
-    for NUM_USERS in NUM_USERS_LIST:
-        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        log_file = LOG_DIR / f"hc_{NUM_USERS}u_{timestamp}.log"
+def run_long_duration():
+    if TOTAL_TIME % UNIT_TIME != 0:
+        raise ValueError("total_time 必須能被 unit_time 整除")
 
-        # 設定 logger
-        logger = logging.getLogger(f"hc_{NUM_USERS}")
-        logger.setLevel(logging.INFO)
-        logger.handlers.clear()  # 避免重複
-        fh = logging.FileHandler(log_file, mode='w', encoding='utf-8')
-        formatter = logging.Formatter('%(asctime)s | %(levelname)s | %(message)s')
-        fh.setFormatter(formatter)
-        logger.addHandler(fh)
+    num_periods = TOTAL_TIME // UNIT_TIME
+    ratios = generate_load_ratios(num_periods, PEAKS, AMPLITUDE, NOISE)
 
-        logger.info(f"Start high concurrency test: {NUM_USERS} users")
+    all_results = []
+    period_stats = []
 
-        results = []
-        with ThreadPoolExecutor(max_workers=NUM_USERS) as executor:
-            futures = [executor.submit(user_test, i+1, NUM_USERS) for i in range(NUM_USERS)]
-            for future in as_completed(futures):
-                res = future.result()
-                results.append(res)
-                logger.info(f"User {res['user']} finished, success: {res['success']}, total_time: {res['total_time']:.3f}s")
+    for period, ratio in enumerate(ratios, start=1):
+        num_users = max(1, int(UNIT_USERS * ratio))
+        period_results = []
 
-        # ----------------------
-        # 統計計算
-        # ----------------------
-        total = len(results)
-        success_count = sum(1 for r in results if r["success"])
-        fail_count = total - success_count
-        avg_time = sum(r["total_time"] for r in results) / total if total else 0.0
+        log_file = LOG_DIR / f"longrun_{timestamp}_total{TOTAL_TIME}_unit{UNIT_TIME}_p{period:02d}.log"
 
-        # 步驟級別統計
-        step_stats = {}
-        for step_name in ["landing_page", "start_form", "submit_form"]:
-            step_times = [s["time"] for r in results for s in r["steps"] if s["step"] == step_name]
-            step_success = [s["success"] for r in results for s in r["steps"] if s["step"] == step_name]
-            step_stats[step_name] = {
-                "average_time": sum(step_times)/len(step_times) if step_times else 0.0,
-                "success_rate": sum(step_success)/len(step_success) if step_success else 0.0
-            }
+        with ThreadPoolExecutor(max_workers=num_users) as executor:
+            futures = [executor.submit(user_test, i+1, num_users) for i in range(num_users)]
+            for f in as_completed(futures):
+                res = f.result()
+                period_results.append(res)
 
-        summary = {
-            "NUM_USERS": NUM_USERS,
-            "total_users": total,
-            "success_count": success_count,
-            "fail_count": fail_count,
-            "success_rate": success_count / total if total else 0.0,
-            "average_time": avg_time,
-            "step_stats": step_stats
-        }
+        # 儲存該 period 的 log
+        with open(log_file, "w", encoding="utf-8") as f:
+            for res in period_results:
+                f.write(json.dumps(res, ensure_ascii=False) + "\n")
 
-        logger.info(f"SUMMARY: {summary}")
+        # 計算 period 統計
+        total_steps = sum(len(r["steps"]) for r in period_results)
+        success_steps = sum(1 for r in period_results for s in r["steps"] if s["success"])
+        avg_step_success_rate = success_steps / max(1, total_steps)
+        avg_user_success_rate = sum(1 for r in period_results if r["success"]) / max(1, len(period_results))
+        avg_time = sum(r["total_time"] for r in period_results) / max(1, len(period_results))
 
-        # 存放 summary JSON
-        summary_file = SUMMARY_DIR / f"summary_{NUM_USERS}u_{timestamp}.json"
-        with open(summary_file, "w", encoding="utf-8") as f:
-            json.dump(summary, f, indent=2)
+        period_stats.append({
+            "period": period,
+            "users": num_users,
+            "avg_step_success_rate": avg_step_success_rate,
+            "avg_user_success_rate": avg_user_success_rate,
+            "avg_time": avg_time
+        })
 
-        print(f"----------------- High concurrency test for {NUM_USERS} users finished -----------------")
-        print(f"Log: {log_file}")
-        print(f"Summary: {summary_file}\n")
+        all_results.extend(period_results)
+        print(f"[Period {period}/{num_periods}] Users={num_users}, StepSuccess={avg_step_success_rate:.2f}, UserSuccess={avg_user_success_rate:.2f}, AvgTime={avg_time:.2f}")
+
+        time.sleep(UNIT_TIME)
+
+    # ----------------------
+    # 全域統計
+    # ----------------------
+    total = len(all_results)
+    total_steps = sum(len(r["steps"]) for r in all_results)
+    success_steps = sum(1 for r in all_results for s in r["steps"] if s["success"])
+    avg_step_success_rate = success_steps / max(1, total_steps)
+    avg_user_success_rate = sum(1 for r in all_results if r["success"]) / max(1, total)
+    avg_time = sum(r["total_time"] for r in all_results) / max(1, total)
+
+    summary = {
+        "total_users": total,
+        "avg_step_success_rate": avg_step_success_rate,
+        "avg_user_success_rate": avg_user_success_rate,
+        "avg_time": avg_time,
+        "period_stats": period_stats
+    }
+
+    with open(summary_file, "w", encoding="utf-8") as f:
+        json.dump(summary, f, indent=2, ensure_ascii=False)
+
+    print(f"----------------- Long duration test finished -----------------")
+    print(f"Summary: {summary_file}\n")
+
 
 if __name__ == "__main__":
-    run_high_concurrency()
+    run_long_duration()
