@@ -1,6 +1,5 @@
 {
-  "BASE_URL": "http://127.0.0.1:5000",
-  "NUM_USERS": [10, 20, 30, 40, 50, 60],
-  "SUCCESS_THRESHOLDS": [30, 50],
-  "DECAY_RATE": 0.2
+  "num_users": [10, 20, 30, 40, 50, 60],
+  "success_thresholds": [30, 50],
+  "decay_rate": 0.2
 }

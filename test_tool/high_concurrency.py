@@ -25,14 +25,17 @@ HC_CONFIG_PATH = Path("config/high_concurrency.json")
 with open(HC_CONFIG_PATH, "r", encoding="utf-8") as f:
     hc_config = json.load(f)
 
-NUM_USERS_LIST = hc_config.get("NUM_USERS", [10, 20, 30, 40, 50])
+NUM_USERS_LIST = hc_config.get("num_users", [10, 20, 30, 40, 50])
+SUCCESS_THRESHOLDS = tuple(hc_config.get("success_thresholds", [30, 50]))
+DECAY_RATE = hc_config.get("decay_rate", 0.7)
+
+# ----------------------
+# 設定log存放位置
+# ----------------------
 LOG_DIR = Path("results/logs/high_concurrency")
 LOG_DIR.mkdir(parents=True, exist_ok=True)
 SUMMARY_DIR = Path("results/summary/high_concurrency")
 SUMMARY_DIR.mkdir(parents=True, exist_ok=True)
-
-SUCCESS_THRESHOLDS = tuple(hc_config.get("SUCCESS_THRESHOLDS", [30, 50]))
-DECAY_RATE = hc_config.get("DECAY_RATE", 0.7)
 
 # ----------------------
 # 成功率模擬
