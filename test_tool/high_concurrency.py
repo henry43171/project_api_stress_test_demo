@@ -41,12 +41,17 @@ SUMMARY_DIR.mkdir(parents=True, exist_ok=True)
 # 成功率模擬
 # ----------------------
 def simulate_success(n, thresholds=SUCCESS_THRESHOLDS, decay=DECAY_RATE):
-    if n <= thresholds[0]:
+    low, high = thresholds
+    if n <= low:
         return True
-    elif thresholds[0] < n <= thresholds[1]:
-        return random.random() < decay ** (n - thresholds[0])
+    elif low < n <= high:
+        # 將指數衰減平滑到最小成功率 0.1
+        scale = (n - low) / (high - low)  # 0 -> 1
+        success_prob = (1 - 0.1) * (decay ** scale) + 0.1
+        return random.random() < success_prob
     else:
         return random.random() < 0.1
+
 
 # ----------------------
 # 單一用戶測試封裝
