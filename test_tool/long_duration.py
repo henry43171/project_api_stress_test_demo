@@ -27,10 +27,13 @@ with open(LD_CONFIG_PATH, "r", encoding="utf-8") as f:
 TEST_TOTAL_TIME = ld_config["test_total_time"]
 TEST_UNIT_TIME = ld_config["test_unit_time"]
 UNIT_USERS = ld_config.get("unit_users", 10)
-PEAKS = ld_config.get("peaks", [])
+LOW_BENCHMRK = ld_config.get("low_benchmark", 10)
+HIGH_BENCHMRK = ld_config.get("high_benchmark", 50)
+PEAKS = ld_config.get("peaks", [2, 6])
+PEAK_SCALE = ld_config.get("peak_scale", 4.0)   # 高峰倍數
 AMPLITUDE = ld_config.get("amplitude", 0.5)
-NOISE = ld_config.get("noise", 0.1)
-SUCCESS_THRESHOLDS = ld_config.get("success_thresholds", [0.95, 0.7])
+NOISE = ld_config.get("noise", 0.008)
+SUCCESS_THRESHOLDS = ld_config.get("success_thresholds", [1.0, 0.6])
 DECAY_RATE = ld_config.get("decay_rate", 0.01)
 
 # ----------------------
@@ -47,41 +50,50 @@ summary_file = SUMMARY_DIR / f"summary_{timestamp}_total{TEST_TOTAL_TIME}_unit{T
 # ----------------------
 # 工具函式
 # ----------------------
+# ---- 人數生成函式 ----
 def period_user(period_index: int, num_periods: int) -> int:
     """
-    人數生成：
-    - 基準人數：UNIT_USERS
-    - 加上正弦曲線模擬高峰
-    - peaks 可提高特定時段的人數
-    - noise 加入隨機擾動
+    Gaussian 平滑峰值 + 可調整最大倍數
     """
-    # 基準人數
     base = UNIT_USERS
-
-    # 正弦波調整 (週期 = num_periods)
-    angle = (2 * math.pi * period_index) / num_periods
-    sine_factor = 1 + AMPLITUDE * math.sin(angle)
-
-    # peaks 額外加權
-    peak_bonus = 3 if period_index in PEAKS else 1.0
-
-    # noise 隨機擾動
     noise_factor = 1 + random.uniform(-NOISE, NOISE)
 
-    # 計算人數（至少 1 人）
-    users = max(1, int(base * sine_factor * peak_bonus * noise_factor))
+    peak_factor = 0.0
+    for peak in PEAKS:
+        sigma = 3
+        distance = period_index - peak
+        peak_factor += math.exp(-(distance**2) / (2 * sigma**2))  # 最大值 1
+
+    # scale 高峰，最大 users = base * PEAK_SCALE
+    users = max(1, int(base * (1 + (PEAK_SCALE - 1) * peak_factor) * noise_factor))
     return users
 
+def simulate_success(users: int,
+                     success_thresholds: list =SUCCESS_THRESHOLDS,
+                     low_benchmark: int = LOW_BENCHMRK,
+                     high_benchmark: int = HIGH_BENCHMRK) -> float:
+    """
+    模擬成功率，分段控制：
+    - users <= low_benchmark → 最大成功率
+    - low_benchmark < users <= high_benchmark → 線性衰減
+    - users > high_benchmark → 最小成功率
 
-def simulate_success(users: int) -> bool:
+    參數：
+    - users: 當前人數
+    - success_thresholds: (高閾值, 低閾值)
+    - low_benchmark: 線性衰減起點
+    - high_benchmark: 線性衰減終點
     """
-    成功率模擬：
-    - 根據人數，從高閾值逐漸衰減到低閾值
-    - 模型：prob = max(low, high - decay * users)
-    """
-    high, low = SUCCESS_THRESHOLDS
-    prob = max(low, high - DECAY_RATE * users)
-    return random.random() < prob
+    high, low = success_thresholds
+
+    if users <= low_benchmark:
+        return high
+    elif users <= high_benchmark:
+        # 線性衰減公式，保證不低於 low
+        prob = high * (1 - (users - low_benchmark) / (high_benchmark - low_benchmark))
+        return max(prob, low)
+    else:
+        return low
 
 
 # ----------------------
@@ -95,7 +107,8 @@ def user_test(index, total_users):
                                 ("start_form", start_form),
                                 ("submit_form", lambda: submit_form(data))]:
             r, elapsed = func()
-            step_success = r.status_code == 200 and simulate_success(total_users)
+            prob = simulate_success(total_users)
+            step_success = r.status_code == 200 and (random.random() < prob)
             result["steps"].append({"step": step_name, "success": step_success, "time": elapsed})
             if not step_success:
                 result["success"] = False
@@ -144,7 +157,7 @@ def run_long_duration():
             json.dump(period_results, f, indent=2, ensure_ascii=False)
 
         all_results.extend(period_results)
-        print(f"[Period {p}] Users={users}, Success={stat['success_rate']:.2f}, AvgTime={avg_time:.2f}s")
+        print(f"[Period {p+1}/{num_periods}] Users={users}, Success={stat['success_rate']:.2f}, AvgTime={avg_time:.2f}s")
 
     # ----------------------
     # 全域統計

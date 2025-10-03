@@ -1,10 +1,13 @@
 {
   "test_total_time": 1200,
-  "test_unit_time": 25,
+  "test_unit_time": 48,
   "unit_users": 100,
+  "low_benchmark": 100,
+  "high_benchmark": 500,
   "peaks": [25, 39],
+  "peak_scale": 5.0,
   "amplitude": 0.5,
-  "noise": 0.01,
-  "success_thresholds": [1, 0.9],
+  "noise": 0.008,
+  "success_thresholds": [1.0, 0.6],
   "decay_rate": 0.01
 }
