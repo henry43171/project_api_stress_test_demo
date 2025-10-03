@@ -24,8 +24,8 @@ LD_CONFIG_PATH = Path("config/long_duration.json")
 with open(LD_CONFIG_PATH, "r", encoding="utf-8") as f:
     ld_config = json.load(f)
 
-TOTAL_TIME = ld_config["total_time"]
-UNIT_TIME = ld_config["unit_time"]
+TEST_TOTAL_TIME = ld_config["test_total_time"]
+TEST_UNIT_TIME = ld_config["test_unit_time"]
 UNIT_USERS = ld_config.get("unit_users", 10)
 PEAKS = ld_config.get("peaks", [])
 AMPLITUDE = ld_config.get("amplitude", 0.5)
@@ -42,7 +42,7 @@ LOG_DIR.mkdir(parents=True, exist_ok=True)
 SUMMARY_DIR.mkdir(parents=True, exist_ok=True)
 
 timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-summary_file = SUMMARY_DIR / f"summary_{timestamp}_total{TOTAL_TIME}_unit{UNIT_TIME}.json"
+summary_file = SUMMARY_DIR / f"summary_{timestamp}_total{TEST_TOTAL_TIME}_unit{TEST_UNIT_TIME}.json"
 
 # ----------------------
 # 工具函式
@@ -89,7 +89,7 @@ def simulate_success(users, thresholds=SUCCESS_THRESHOLDS, decay=DECAY_RATE):
 
 
 def user_test(index, total_users):
-    result = {"user": index, "steps": [], "success": True, "total_time": 0.0}
+    result = {"user": index, "steps": [], "success": True, "TEST_TOTAL_TIME": 0.0}
     start_time = time.time()
     try:
         for step_name, func in [("landing_page", visit_landing_page),
@@ -101,7 +101,7 @@ def user_test(index, total_users):
             if not step_success:
                 result["success"] = False
 
-        result["total_time"] = time.time() - start_time
+        result["TEST_TOTAL_TIME"] = time.time() - start_time
     except Exception as e:
         result["success"] = False
         result["error"] = str(e)
@@ -112,10 +112,10 @@ def user_test(index, total_users):
 # 主流程
 # ----------------------
 def run_long_duration():
-    if TOTAL_TIME % UNIT_TIME != 0:
-        raise ValueError("total_time 必須能被 unit_time 整除")
+    if TEST_TOTAL_TIME % TEST_UNIT_TIME != 0:
+        raise ValueError("TEST_TOTAL_TIME 必須能被 TEST_UNIT_TIME 整除")
 
-    num_periods = TOTAL_TIME // UNIT_TIME
+    num_periods = TEST_TOTAL_TIME // TEST_UNIT_TIME
     ratios = generate_load_ratios(num_periods, PEAKS, AMPLITUDE, NOISE)
 
     all_results = []
@@ -125,7 +125,7 @@ def run_long_duration():
         num_users = int(UNIT_USERS * ratio)
         period_results = []
 
-        log_file = LOG_DIR / f"longrun_{timestamp}_total{TOTAL_TIME}_unit{UNIT_TIME}_p{period:02d}.log"
+        log_file = LOG_DIR / f"longrun_{timestamp}_total{TEST_TOTAL_TIME}_unit{TEST_UNIT_TIME}_p{period:02d}.log"
 
         with ThreadPoolExecutor(max_workers=num_users) as executor:
             futures = [executor.submit(user_test, i, num_users) for i in range(num_users)]
@@ -140,7 +140,7 @@ def run_long_duration():
 
         # 計算 period 統計
         successes = sum(1 for r in period_results if r["success"])
-        avg_time = sum(r["total_time"] for r in period_results) / max(1, len(period_results))
+        avg_time = sum(r["TEST_TOTAL_TIME"] for r in period_results) / max(1, len(period_results))
         success_rate = successes / max(1, len(period_results))
 
         period_stats.append({
@@ -153,14 +153,14 @@ def run_long_duration():
         all_results.extend(period_results)
         print(f"[Period {period}/{num_periods}] Users={num_users}, Success={success_rate:.2f}, AvgTime={avg_time:.2f}")
 
-        time.sleep(UNIT_TIME)
+        time.sleep(TEST_UNIT_TIME)
 
     # ----------------------
     # 全域統計
     # ----------------------
     total = len(all_results)
     successes = sum(1 for r in all_results if r["success"])
-    avg_time = sum(r["total_time"] for r in all_results) / total
+    avg_time = sum(r["TEST_TOTAL_TIME"] for r in all_results) / total
 
     summary = {
         "total_users": total,
