@@ -1,5 +1,5 @@
 {
-  "num_users": [10, 20, 30, 40, 50, 60],
-  "success_thresholds": [30, 50],
-  "decay_rate": 0.2
+  "num_users": [100, 200, 300, 400, 500, 600, 700, 800, 900, 1000],
+  "success_thresholds": [300, 600],
+  "decay_rate": 0.95
 }
