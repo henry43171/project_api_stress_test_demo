@@ -57,10 +57,36 @@ def generate_load_ratios(num_periods, peaks, amplitude, noise):
         ratios.append(max(0.1, base + jitter))
     return ratios
 
+
 def simulate_success(users, thresholds=SUCCESS_THRESHOLDS, decay=DECAY_RATE):
+    """
+    模擬操作成功與否。
+
+    成功率會隨著使用者數量增加而衰減，但不低於設定的最低成功率。
+
+    Parameters
+    ----------
+    users : int
+        當前使用者數量。
+    thresholds : list of float, optional
+        [最高成功率, 最低成功率]，預設為 SUCCESS_THRESHOLDS。
+    decay : float, optional
+        成功率衰減值，預設為 DECAY_RATE。
+
+    Returns
+    -------
+    bool
+        模擬是否成功。True 表示成功，False 表示失敗。
+    """
+    # 拆解成功率上下限
     high, low = thresholds
+
+    # 計算隨著使用者數量衰減後的成功率，並確保不低於最低成功率
     prob = max(low, high - decay * users)
+
+    # 以 prob 為成功機率，隨機判斷是否成功
     return random.random() < prob
+
 
 def user_test(index, total_users):
     result = {"user": index, "steps": [], "success": True, "total_time": 0.0}
@@ -80,6 +106,7 @@ def user_test(index, total_users):
         result["success"] = False
         result["error"] = str(e)
     return result
+
 
 # ----------------------
 # 主流程
@@ -147,6 +174,7 @@ def run_long_duration():
 
     print(f"----------------- Long duration test finished -----------------")
     print(f"Summary: {summary_file}\n")
+
 
 if __name__ == "__main__":
     run_long_duration()
