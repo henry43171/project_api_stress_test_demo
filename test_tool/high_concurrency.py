@@ -44,7 +44,7 @@ def user_test(index, total_users):
         for step_name, func in [
             ("landing_page", visit_landing_page),
             ("start_form", start_form),
-            ("submit_form", lambda: submit_form(data))
+            ("submit_form", lambda: submit_form({**data, "current_users": total_users}))
         ]:
             r, elapsed = func()
 
