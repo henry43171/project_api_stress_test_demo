@@ -1,0 +1,9 @@
+{
+  "user_thresholds": {
+    "safe": 100,
+    "decay_start": 100,
+    "decay_end": 300
+  },
+  "base_success_rate": 1.0,
+  "min_success_rate": 0.1
+}

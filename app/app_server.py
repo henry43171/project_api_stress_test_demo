@@ -2,9 +2,53 @@
 from flask import Flask, jsonify, request
 from flasgger import Swagger
 import time
+import json
+import os
+import sys
+import random
 
+# ----------------------
+# 讀取設定檔
+# ----------------------
+CONFIG_PATH = "config/server_config.json"
+
+if os.path.exists(CONFIG_PATH):
+    with open(CONFIG_PATH, "r", encoding="utf-8") as f:
+        CONFIG = json.load(f)
+else:
+    print("無法啟動伺服器：缺少設定檔 config/server_config.json")
+    sys.exit(1)
+
+# ----------------------
+# 初始化 Flask
+# ----------------------
 app = Flask(__name__)
 swagger = Swagger(app)
+
+# ----------------------
+# 模擬目前使用者人數
+# ----------------------
+def simulate_current_users():
+    # 範圍可依實際需求調整
+    return random.randint(50, 400)
+
+
+# ----------------------
+# 計算成功率
+# ----------------------
+def get_success_probability(current_users):
+    t = CONFIG["user_thresholds"]
+    base = CONFIG["base_success_rate"]
+    min_rate = CONFIG["min_success_rate"]
+
+    if current_users <= t["safe"]:
+        return base
+    elif current_users >= t["decay_end"]:
+        return min_rate
+    else:
+        ratio = (current_users - t["decay_start"]) / (t["decay_end"] - t["decay_start"])
+        return base - (base - min_rate) * ratio
+
 
 # ----------------------
 # GET /landing_page
@@ -74,7 +118,7 @@ def start_form():
 @app.route("/submit_form", methods=["POST"])
 def submit_form():
     """
-    使用者送出表單，回傳成功訊息
+    使用者送出表單，根據模擬負載回傳成功或失敗訊息
     ---
     requestBody:
       required: true
@@ -109,25 +153,23 @@ def submit_form():
     responses:
       200:
         description: 表單提交成功
-        content:
-          application/json:
-            example:
-              message: "表單提交成功！"
-              received_form:
-                gender: "male"
-                age_group: "20-30"
-                feedback: "很好"
-                willing:
-                  to_return: true
-                  receive_promotions: false
-                  receive_birthday_notifications: true
+      503:
+        description: 伺服器忙碌
     """
     form_data = request.json
+    current_users = simulate_current_users()
+    success_prob = get_success_probability(current_users)
     time.sleep(0.3)
-    return jsonify({
-        "message": "表單提交成功！",
-        "received_form": form_data
-    })
+
+    if random.random() < success_prob:
+        return jsonify({
+            "message": f"表單提交成功！（目前模擬使用者 {current_users} 人，成功率 {success_prob:.2f}）",
+            "received_form": form_data
+        })
+    else:
+        return jsonify({
+            "message": f"伺服器忙碌，請稍後再試。（目前模擬使用者 {current_users} 人，成功率 {success_prob:.2f}）"
+        }), 503
 
 
 if __name__ == "__main__":
