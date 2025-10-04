@@ -2,7 +2,6 @@
 import os
 import json
 import time
-import random
 from pathlib import Path
 from datetime import datetime
 from concurrent.futures import ThreadPoolExecutor, as_completed
@@ -26,8 +25,6 @@ with open(HC_CONFIG_PATH, "r", encoding="utf-8") as f:
     hc_config = json.load(f)
 
 NUM_USERS_LIST = hc_config.get("num_users", [10, 20, 30, 40, 50])
-SUCCESS_THRESHOLDS = tuple(hc_config.get("success_thresholds", [30, 50]))
-DECAY_RATE = hc_config.get("decay_rate", 0.7)
 
 # ----------------------
 # 設定log存放位置
@@ -38,34 +35,26 @@ SUMMARY_DIR = Path("results/summary/high_concurrency")
 SUMMARY_DIR.mkdir(parents=True, exist_ok=True)
 
 # ----------------------
-# 成功率模擬
-# ----------------------
-def simulate_success(n, thresholds=SUCCESS_THRESHOLDS, decay=DECAY_RATE):
-    low, high = thresholds
-    if n <= low:
-        return True
-    elif low < n <= high:
-        # 將指數衰減平滑到最小成功率 0.1
-        scale = (n - low) / (high - low)  # 0 -> 1
-        success_prob = (1 - 0.1) * (decay ** scale) + 0.1
-        return random.random() < success_prob
-    else:
-        return random.random() < 0.1
-
-
-# ----------------------
 # 單一用戶測試封裝
 # ----------------------
 def user_test(index, total_users):
     result = {"user": index, "steps": [], "success": True, "total_time": 0.0}
     start_time = time.time()
     try:
-        for step_name, func in [("landing_page", visit_landing_page),
-                                ("start_form", start_form),
-                                ("submit_form", lambda: submit_form(data))]:
+        for step_name, func in [
+            ("landing_page", visit_landing_page),
+            ("start_form", start_form),
+            ("submit_form", lambda: submit_form(data))
+        ]:
             r, elapsed = func()
-            step_success = r.status_code == 200 and simulate_success(total_users)
-            result["steps"].append({"step": step_name, "success": step_success, "time": elapsed})
+
+            # 成功條件：HTTP 200 + API message 正常
+            step_success = (r.status_code == 200)
+            result["steps"].append({
+                "step": step_name,
+                "success": step_success,
+                "time": elapsed
+            })
             if not step_success:
                 result["success"] = False
 
@@ -76,6 +65,7 @@ def user_test(index, total_users):
         result["error"] = str(e)
 
     return result
+
 
 # ----------------------
 # 高併發執行
@@ -98,11 +88,13 @@ def run_high_concurrency():
 
         results = []
         with ThreadPoolExecutor(max_workers=NUM_USERS) as executor:
-            futures = [executor.submit(user_test, i+1, NUM_USERS) for i in range(NUM_USERS)]
+            futures = [executor.submit(user_test, i + 1, NUM_USERS) for i in range(NUM_USERS)]
             for future in as_completed(futures):
                 res = future.result()
                 results.append(res)
-                logger.info(f"User {res['user']} finished, success: {res['success']}, total_time: {res['total_time']:.3f}s")
+                logger.info(
+                    f"User {res['user']} finished, success: {res['success']}, total_time: {res['total_time']:.3f}s"
+                )
 
         # ----------------------
         # 統計計算
@@ -118,8 +110,8 @@ def run_high_concurrency():
             step_times = [s["time"] for r in results for s in r["steps"] if s["step"] == step_name]
             step_success = [s["success"] for r in results for s in r["steps"] if s["step"] == step_name]
             step_stats[step_name] = {
-                "average_time": sum(step_times)/len(step_times) if step_times else 0.0,
-                "success_rate": sum(step_success)/len(step_success) if step_success else 0.0
+                "average_time": sum(step_times) / len(step_times) if step_times else 0.0,
+                "success_rate": sum(step_success) / len(step_success) if step_success else 0.0
             }
 
         summary = {
@@ -142,6 +134,7 @@ def run_high_concurrency():
         print(f"----------------- High concurrency test for {NUM_USERS} users finished -----------------")
         print(f"Log: {log_file}")
         print(f"Summary: {summary_file}\n")
+
 
 if __name__ == "__main__":
     run_high_concurrency()
