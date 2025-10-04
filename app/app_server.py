@@ -34,13 +34,17 @@ def get_success_probability(current_users):
     min_rate = CONFIG["min_success_rate"]
 
     if current_users <= t["safe"]:
-        return base
+        success_prob = base
     elif current_users >= t["decay_end"]:
-        return min_rate
+        success_prob = min_rate
     else:
-        ratio = (current_users - t["decay_start"]) / (t["decay_end"] - t["decay_start"])
-        return base - (base - min_rate) * ratio
+        # 線性衰減
+        ratio = (current_users - t["safe"]) / (t["decay_end"] - t["safe"])
+        success_prob = base - (base - min_rate) * ratio
 
+    # clamp 確保在 [min_rate, base]
+    success_prob = max(min(success_prob, base), min_rate)
+    return success_prob
 
 # ----------------------
 # GET /landing_page
@@ -65,7 +69,6 @@ def landing_page():
         "message": "歡迎來到匿名表單填寫系統！",
         "media_preview": media_preview[:100] + "...(略)"
     })
-
 
 # ----------------------
 # GET /start_form
@@ -102,7 +105,6 @@ def start_form():
         }
     }
     return jsonify({"form": form_structure})
-
 
 # ----------------------
 # POST /submit_form
@@ -156,6 +158,7 @@ def submit_form():
     success_prob = get_success_probability(current_users)
     time.sleep(0.3)
 
+    # 依成功率決定回傳
     if random.random() < success_prob:
         return jsonify({
             "message": f"表單提交成功！（目前模擬使用者 {current_users} 人，成功率 {success_prob:.2f}）",
@@ -166,6 +169,6 @@ def submit_form():
             "message": f"伺服器忙碌，請稍後再試。（目前模擬使用者 {current_users} 人，成功率 {success_prob:.2f}）"
         }), 503
 
-
 if __name__ == "__main__":
-    app.run(debug=True)
+    # 啟動多線程模式，方便高併發測試
+    app.run(debug=True, threaded=True)
