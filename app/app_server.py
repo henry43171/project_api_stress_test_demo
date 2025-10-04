@@ -26,14 +26,6 @@ app = Flask(__name__)
 swagger = Swagger(app)
 
 # ----------------------
-# 模擬目前使用者人數
-# ----------------------
-def simulate_current_users():
-    # 範圍可依實際需求調整
-    return random.randint(50, 400)
-
-
-# ----------------------
 # 計算成功率
 # ----------------------
 def get_success_probability(current_users):
@@ -56,7 +48,7 @@ def get_success_probability(current_users):
 @app.route("/landing_page", methods=["GET"])
 def landing_page():
     """
-    模擬使用者進入首頁，回傳文字提示和模擬媒體延遲
+    使用者進入首頁，回傳文字提示與模擬媒體預覽
     ---
     responses:
       200:
@@ -65,7 +57,7 @@ def landing_page():
           application/json:
             example:
               message: "歡迎來到匿名表單填寫系統！"
-              media_preview: "模擬圖片/影片大字串..."
+              media_preview: "模擬圖片/影片大字串...(略)"
     """
     time.sleep(0.5)
     media_preview = "X" * 100000
@@ -81,11 +73,11 @@ def landing_page():
 @app.route("/start_form", methods=["GET"])
 def start_form():
     """
-    使用者點擊「填寫表單」按鈕，回傳空表單
+    使用者點擊「填寫表單」按鈕，回傳空表單結構
     ---
     responses:
       200:
-        description: 空表單結構
+        description: 空表單 JSON 結構
         content:
           application/json:
             example:
@@ -118,7 +110,7 @@ def start_form():
 @app.route("/submit_form", methods=["POST"])
 def submit_form():
     """
-    使用者送出表單，根據模擬負載回傳成功或失敗訊息
+    使用者送出表單，根據傳入的 current_users 計算成功率
     ---
     requestBody:
       required: true
@@ -142,6 +134,8 @@ def submit_form():
                     type: boolean
                   receive_birthday_notifications:
                     type: boolean
+              current_users:
+                type: integer
           example:
             gender: "male"
             age_group: "20-30"
@@ -150,14 +144,15 @@ def submit_form():
               to_return: true
               receive_promotions: false
               receive_birthday_notifications: true
+            current_users: 150
     responses:
       200:
         description: 表單提交成功
       503:
         description: 伺服器忙碌
     """
-    form_data = request.json
-    current_users = simulate_current_users()
+    form_data = request.json or {}
+    current_users = form_data.get("current_users", CONFIG["user_thresholds"]["safe"])
     success_prob = get_success_probability(current_users)
     time.sleep(0.3)
 
