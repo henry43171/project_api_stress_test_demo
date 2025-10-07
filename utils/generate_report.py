@@ -86,24 +86,39 @@ def generate_long_duration_report(summary_dir):
     for per, u, s in zip(periods, users, success_rates):
         print(f"{per:6d} | {u:5d} | {s:14.2f}")
 
-    # 畫雙 Y 軸圖表
+    # 從這邊開始
     fig, ax1 = plt.subplots(figsize=(10,6))
-    
-    ax1.plot(periods, users, color="tab:blue", marker="o", label="Users")
+
+    # Users 柱狀圖
+    if max(users) > 0:
+        bars = ax1.bar(periods, users, color=plt.cm.Blues([u/max(users) for u in users]), alpha=0.8)
+    else:
+        bars = ax1.bar(periods, users, color="tab:blue", alpha=0.8)
+
     ax1.set_xlabel("Period")
     ax1.set_ylabel("Users", color="tab:blue")
     ax1.tick_params(axis="y", labelcolor="tab:blue")
 
+    # 在柱頂加數值
+    for rect in ax1.patches:
+        height = rect.get_height()
+        ax1.text(rect.get_x() + rect.get_width()/2, height + 5, f"{height}", 
+                ha='center', va='bottom', fontsize=8)
+
+    # Success Rate 折線圖（優化風格）
     ax2 = ax1.twinx()
-    ax2.plot(periods, success_rates, color="tab:orange", marker="x", label="Success Rate")
-    ax2.set_ylabel("Success Rate (%)", color="tab:orange")
+    # 折線
+    ax2.plot(periods, success_rates, color="tab:orange", marker="o", markersize=5,
+            linewidth=3, alpha=0.8, label="Success Rate")
+
     ax2.tick_params(axis="y", labelcolor="tab:orange")
+    ax2.set_ylabel("Success Rate (%)", color="tab:orange")
 
     plt.title("Long Duration Report")
-    fig.tight_layout()
-    # 圖例合併
-    fig.legend(loc="lower right", bbox_to_anchor=(1, 0), ncol=1)
-    fig.tight_layout(rect=[0, 0, 0.9, 1])  # 留 10% 空間給右側圖例
+    # 調整圖表區域，避免圖例擋線
+    fig.tight_layout(rect=[0, 0, 0.9, 1])
+    # 圖例合併，放右下
+    fig.legend(loc="lower right", bbox_to_anchor=(1.0, 0), ncol=1, fontsize=9)
 
     plt.show()
 
