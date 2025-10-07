@@ -64,17 +64,48 @@ def generate_long_duration_report(summary_dir):
     summary_dir = Path(summary_dir)
     json_files = sorted(summary_dir.glob("*.json"))
     all_data = []
+
     for f in json_files:
         with open(f, "r", encoding="utf-8") as file:
             data = json.load(file)
             all_data.append(data)
-    # TODO: 根據 all_data 畫圖
-    print(f"[長時間報表] 已讀取 {len(all_data)} 筆 summary 檔案")
-    # plt.plot(range(len(all_data)), [d["users"] for d in all_data])
-    # plt.title("Long Duration Users Per Interval")
-    # plt.xlabel("Interval Index")
-    # plt.ylabel("Users")
-    # plt.show()
+
+    if not all_data:
+        print("No JSON files found.")
+        return
+
+    # 只取第一個檔案的 period_stats
+    period_stats = all_data[0]["period_stats"]
+
+    periods = [p["period"] for p in period_stats]
+    users = [p["users"] for p in period_stats]
+    success_rates = [p["success_rate"] * 100 for p in period_stats]  # 百分比
+
+    # 列印數值
+    print("Period | Users | Success Rate (%)")
+    print("-" * 30)
+    for per, u, s in zip(periods, users, success_rates):
+        print(f"{per:6d} | {u:5d} | {s:14.2f}")
+
+    # 畫雙 Y 軸圖表
+    fig, ax1 = plt.subplots(figsize=(8, 5))
+
+    ax1.plot(periods, users, color="tab:blue", marker="o", label="Users")
+    ax1.set_xlabel("Period")
+    ax1.set_ylabel("Users", color="tab:blue")
+    ax1.tick_params(axis="y", labelcolor="tab:blue")
+
+    ax2 = ax1.twinx()
+    ax2.plot(periods, success_rates, color="tab:orange", marker="x", label="Success Rate")
+    ax2.set_ylabel("Success Rate (%)", color="tab:orange")
+    ax2.tick_params(axis="y", labelcolor="tab:orange")
+
+    plt.title("Long Duration Report")
+    fig.tight_layout()
+    ax1.legend(loc="upper left")
+    ax2.legend(loc="upper right")
+    plt.show()
+
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Generate test reports")
