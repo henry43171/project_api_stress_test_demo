@@ -36,8 +36,7 @@ def generate_high_concurrency_report(summary_dir):
     for i, (n, s) in enumerate(zip(num_users, success_rates), 1):
         print(f"{i:5d} | {n:9d} | {s:14.2f}")
 
-
-    fig, ax1 = plt.subplots(figsize=(8, 5))
+    fig, ax1 = plt.subplots(figsize=(10,6))
 
     # 左 Y 軸：NUM_USERS
     ax1.plot(batches, num_users, color="tab:blue", marker="o", label="NUM_USERS")
@@ -54,8 +53,8 @@ def generate_high_concurrency_report(summary_dir):
     # 標題與圖例
     plt.title("High Concurrency Report")
     fig.tight_layout()
-    ax1.legend(loc="upper left")
-    ax2.legend(loc="upper right")
+    fig.legend(loc="lower right", bbox_to_anchor=(1, 0), ncol=1)
+    fig.tight_layout(rect=[0, 0, 0.9, 1])  # 留 15% 空間給右側圖例
 
     plt.show()
 
@@ -88,8 +87,8 @@ def generate_long_duration_report(summary_dir):
         print(f"{per:6d} | {u:5d} | {s:14.2f}")
 
     # 畫雙 Y 軸圖表
-    fig, ax1 = plt.subplots(figsize=(8, 5))
-
+    fig, ax1 = plt.subplots(figsize=(10,6))
+    
     ax1.plot(periods, users, color="tab:blue", marker="o", label="Users")
     ax1.set_xlabel("Period")
     ax1.set_ylabel("Users", color="tab:blue")
@@ -102,8 +101,10 @@ def generate_long_duration_report(summary_dir):
 
     plt.title("Long Duration Report")
     fig.tight_layout()
-    ax1.legend(loc="upper left")
-    ax2.legend(loc="upper right")
+    # 圖例合併
+    fig.legend(loc="lower right", bbox_to_anchor=(1, 0), ncol=1)
+    fig.tight_layout(rect=[0, 0, 0.9, 1])  # 留 10% 空間給右側圖例
+
     plt.show()
 
 
