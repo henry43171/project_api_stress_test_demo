@@ -75,13 +75,15 @@ def generate_high_concurrency_report(summary_dir):
     fig, ax1 = plt.subplots(figsize=(10,6))
 
     # NUM_USERS 用柱狀圖
-    bars = plot_bar(ax1, batches, num_users, label="NUM_USERS", color="tab:blue")
+    bars = plot_bar(ax1, batches, num_users, label="Users", color="tab:blue")
 
     # Success Rate 用折線圖
     ax2 = ax1.twinx()
     line = plot_line(ax2, batches, success_rates, label="Success Rate", color="tab:orange")
 
-    ax1.set_xlabel("Batch Index")
+    ax1.set_xlabel("Batch")
+    ax1.set_xticks(batches)
+    ax1.set_xticklabels([str(b) for b in batches])
     plt.title("High Concurrency Report")
 
     # 調整圖表區域與圖例
